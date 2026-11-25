@@ -34,18 +34,18 @@ struct ComponentStatus {
 // MARK: - Navigation Tabs
 
 enum ActiveTab: String, CaseIterable, Identifiable {
-    case patcher = "Patcher"
-    case optimizations = "Optimizations"
+    case patcher = "Runtime"
+    case optimizations = "Tweaks"
     case gameFixes = "Game Fixes"
-    case maintenance = "Activity & Caches"
+    case maintenance = "Storage & Console"
 
     var id: String { rawValue }
     var iconName: String {
         switch self {
-        case .patcher: return "bandage.fill"
-        case .optimizations: return "bolt.fill"
-        case .gameFixes: return "gamecontroller.fill"
-        case .maintenance: return "terminal.fill"
+        case .patcher: return "bandage"
+        case .optimizations: return "slider.horizontal.3"
+        case .gameFixes: return "gamecontroller"
+        case .maintenance: return "internaldrive"
         }
     }
 }
@@ -54,11 +54,11 @@ struct GameFixAddon: Identifiable {
     let id: String
     let title: String
     let subtitle: String
-    let repo: String
+    let folderName: String
     let iconName: String
 
     var tarballURL: String {
-        "https://github.com/passs0/\(repo)/archive/refs/heads/main.tar.gz"
+        "https://github.com/passs0/HexAid/archive/refs/heads/main.tar.gz"
     }
 
     var localDirectory: URL {
@@ -75,14 +75,14 @@ struct GameFixAddon: Identifiable {
             id: "re9",
             title: "Resident Evil Requiem (RE9)",
             subtitle: "Fixes D3DMetal/MetalFX stability, audio popping, Bluetooth DualSense, and window focus",
-            repo: "RE9-CrossOver-Fix",
-            iconName: "cross.case.fill"
+            folderName: "RE9-CrossOver-Fix",
+            iconName: "cross.case"
         ),
         GameFixAddon(
             id: "sh2r",
             title: "Silent Hill 2 Remake (GOG)",
             subtitle: "Fixes launch focus, cursor hiding, and UE5 D3D11/DXMT frame pacing",
-            repo: "SH2R-CrossOver-Fix",
+            folderName: "SH2R-CrossOver-Fix",
             iconName: "display"
         )
     ]
@@ -556,13 +556,14 @@ final class HexAidViewModel: ObservableObject {
 
         let dirPath = addon.localDirectory.path
         let url = addon.tarballURL
+        let folder = addon.folderName
         Task.detached {
             let script = """
             set -e
             ADDON_DIR="\(dirPath)"
             rm -rf "$ADDON_DIR"
             mkdir -p "$ADDON_DIR"
-            curl -fsSL "\(url)" | tar -xz -C "$ADDON_DIR" --strip-components=1
+            curl -fsSL "\(url)" | tar -xz -C "$ADDON_DIR" --strip-components=3 "HexAid-main/Addons/\(folder)"
             cd "$ADDON_DIR"
             chmod +x install.sh
             zsh ./install.sh
@@ -615,132 +616,6 @@ final class HexAidViewModel: ObservableObject {
     }
 }
 
-// MARK: - Apple HIG UI Elements
-
-struct IconWellView: View {
-    let systemName: String
-
-    var body: some View {
-        Image(systemName: systemName)
-            .font(.title3)
-            .symbolRenderingMode(.hierarchical)
-            .foregroundStyle(.secondary)
-            .frame(width: 24)
-    }
-}
-
-struct CardGroupBox<Content: View>: View {
-    let title: String
-    var trailingText: String? = nil
-    let content: Content
-
-    init(title: String, trailingText: String? = nil, @ViewBuilder content: () -> Content) {
-        self.title = title
-        self.trailingText = trailingText
-        self.content = content()
-    }
-
-    var body: some View {
-        GroupBox {
-            content
-        } label: {
-            HStack {
-                Text(title)
-                    .font(.headline)
-                Spacer(minLength: 8)
-                if let trailingText {
-                    Text(trailingText)
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                }
-            }
-        }
-    }
-}
-
-struct ComponentRowView: View {
-    let iconName: String
-    let title: String
-    let subtitle: String
-    let badgeText: String
-    let isOk: Bool
-    var showDivider: Bool = true
-
-    var body: some View {
-        VStack(spacing: 0) {
-            HStack(spacing: 12) {
-                IconWellView(systemName: iconName)
-
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(title)
-                        .font(.body)
-                    Text(subtitle)
-                        .font(.callout)
-                        .foregroundColor(.secondary)
-                }
-
-                Spacer()
-
-                Text(badgeText)
-                    .font(.caption.weight(.semibold))
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 3)
-                    .background(
-                        Capsule()
-                            .fill((isOk ? Color.green : Color.orange).opacity(0.18))
-                    )
-                    .foregroundColor(isOk ? .green : .orange)
-            }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 7)
-
-            if showDivider {
-                Divider()
-                    .padding(.leading, 52)
-            }
-        }
-    }
-}
-
-struct ToggleRowView: View {
-    let iconName: String
-    let title: String
-    let description: String
-    @Binding var isOn: Bool
-    var isEnabled: Bool = true
-    var showDivider: Bool = true
-
-    var body: some View {
-        VStack(spacing: 0) {
-            HStack(spacing: 12) {
-                IconWellView(systemName: iconName)
-
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(title)
-                        .font(.body)
-                    Text(description)
-                        .font(.callout)
-                        .foregroundColor(.secondary)
-                }
-
-                Spacer()
-
-                Toggle("", isOn: $isOn)
-                    .toggleStyle(.switch)
-                    .labelsHidden()
-                    .disabled(!isEnabled)
-            }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 6)
-
-            if showDivider {
-                Divider()
-                    .padding(.leading, 52)
-            }
-        }
-    }
-}
-
 // MARK: - Main Content View
 
 struct ContentView: View {
@@ -748,101 +623,19 @@ struct ContentView: View {
     @State private var isConfirmingCachePurge = false
 
     var body: some View {
-        VStack(spacing: 0) {
-            // Scrollable Workspace Content
-            ScrollView(.vertical, showsIndicators: true) {
-                VStack(spacing: 14) {
-                    switch vm.activeTab {
-                    case .patcher:
-                        patcherView
-                    case .optimizations:
-                        optimizationsView
-                    case .gameFixes:
-                        gameFixesView
-                    case .maintenance:
-                        maintenanceView
-                    }
-                }
-                .padding(.horizontal, 18)
-                .padding(.top, 16)
-                .padding(.bottom, 16)
+        NavigationSplitView {
+            List(ActiveTab.allCases, selection: $vm.activeTab) { tab in
+                Label(tab.rawValue, systemImage: tab.iconName)
+                    .tag(tab)
             }
-
-            Divider()
-
-            // Persistent Sticky Bottom Action Bar
-            HStack(spacing: 12) {
-                if vm.isBusy {
-                    ProgressView()
-                        .controlSize(.small)
-                } else {
-                    Image(systemName: vm.status.crossoverExists ? (vm.status.isReady ? "checkmark.circle.fill" : "info.circle") : "exclamationmark.triangle.fill")
-                        .foregroundStyle(vm.status.crossoverExists ? (vm.status.isReady ? .green : .secondary) : .orange)
-                }
-
-                Text(vm.status.crossoverExists ? (vm.status.isReady ? "\(vm.selectedCrossOverName) is patched" : "Ready to patch \(vm.selectedCrossOverName)") : "CrossOver not found")
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
-
-                Spacer()
-
-                switch vm.activeTab {
-                case .patcher:
-                    Button(action: { vm.runPatch() }) {
-                        Label(
-                            vm.isBusy ? "Patching..." : (vm.status.isReady ? "Re-Apply Patches" : "Patch \(vm.selectedCrossOverName)"),
-                            systemImage: "bandage.fill"
-                        )
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .controlSize(.large)
-                    .disabled(vm.isBusy || !vm.status.crossoverExists)
-
-                case .optimizations:
-                    Button(action: { vm.applyOptimizations() }) {
-                        Label(
-                            vm.isBusy ? "Applying..." : "Apply Optimizations",
-                            systemImage: "bolt.fill"
-                        )
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .controlSize(.large)
-                    .disabled(vm.isBusy || !vm.status.crossoverExists)
-
-                case .gameFixes:
-                    Text("Downloaded to ~/Library/Application Support/HexAid/Addons")
-                        .font(.caption)
-                        .foregroundStyle(.tertiary)
-
-                case .maintenance:
-                    Button(action: { isConfirmingCachePurge = true }) {
-                        Label(
-                            "Purge Caches (\(vm.status.formattedCacheSize))",
-                            systemImage: "trash"
-                        )
-                    }
-                    .buttonStyle(.bordered)
-                    .controlSize(.large)
-                    .disabled(vm.isBusy)
-                }
-            }
-            .padding(.horizontal, 18)
-            .padding(.vertical, 14)
-            .background(Color(nsColor: .windowBackgroundColor))
+            .navigationSplitViewColumnWidth(min: 170, ideal: 190, max: 220)
+        } detail: {
+            detailView
+                .navigationTitle(vm.activeTab.rawValue)
+                .navigationSubtitle("\(vm.selectedCrossOverName) • v\(vm.status.versionString) • \(vm.status.bottleCount) Bottle\(vm.status.bottleCount == 1 ? "" : "s")")
         }
-        .frame(minWidth: 680, idealWidth: 740, maxWidth: .infinity,
-               minHeight: 680, idealHeight: 740, maxHeight: .infinity)
+        .frame(minWidth: 740, idealWidth: 800, minHeight: 520, idealHeight: 580)
         .toolbar {
-            ToolbarItem(placement: .principal) {
-                Picker("Workspace", selection: $vm.activeTab) {
-                    ForEach(ActiveTab.allCases) { tab in
-                        Text(tab.rawValue).tag(tab)
-                    }
-                }
-                .pickerStyle(.segmented)
-                .frame(width: 420)
-            }
-
             ToolbarItemGroup(placement: .primaryAction) {
                 if vm.installedCrossOvers.count > 1 {
                     Picker("CrossOver", selection: $vm.selectedCrossOverPath) {
@@ -863,6 +656,28 @@ struct ContentView: View {
                 .keyboardShortcut("r", modifiers: .command)
                 .disabled(vm.isBusy)
                 .help("Refresh status (⌘R)")
+
+                if vm.activeTab == .patcher {
+                    Button(action: { vm.runPatch() }) {
+                        if vm.isBusy {
+                            ProgressView().controlSize(.small)
+                        } else {
+                            Text(vm.status.isReady ? "Re-Apply Patches" : "Patch \(vm.selectedCrossOverName)")
+                        }
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .disabled(vm.isBusy || !vm.status.crossoverExists)
+                } else if vm.activeTab == .optimizations {
+                    Button(action: { vm.applyOptimizations() }) {
+                        if vm.isBusy {
+                            ProgressView().controlSize(.small)
+                        } else {
+                            Text("Apply Tweaks")
+                        }
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .disabled(vm.isBusy || !vm.status.crossoverExists)
+                }
             }
         }
         .confirmationDialog(
@@ -882,222 +697,159 @@ struct ContentView: View {
         }
     }
 
-    // MARK: - Tab Views
+    @ViewBuilder
+    private var detailView: some View {
+        switch vm.activeTab {
+        case .patcher:
+            patcherView
+        case .optimizations:
+            optimizationsView
+        case .gameFixes:
+            gameFixesView
+        case .maintenance:
+            maintenanceView
+        }
+    }
+
+    private func statusBadge(text: String, ok: Bool) -> some View {
+        HStack(spacing: 5) {
+            Image(systemName: ok ? "checkmark.circle.fill" : "exclamationmark.circle.fill")
+                .foregroundStyle(ok ? .green : .orange)
+            Text(text)
+                .foregroundStyle(.secondary)
+        }
+    }
 
     private var patcherView: some View {
-        VStack(spacing: 12) {
-            CardGroupBox(title: "\(vm.selectedCrossOverName) Runtime Status", trailingText: vm.status.isReady ? "All Patched" : "Upgrade Needed") {
-                ComponentRowView(
-                    iconName: "film.stack.fill",
-                    title: "GStreamer + FFmpeg (libgstlibav)",
-                    subtitle: "Full media codecs for Resident Evil, Silent Hill, UE4/5 FMVs",
-                    badgeText: vm.status.gstreamerVersion,
-                    isOk: vm.status.hasGStreamer
-                )
-                ComponentRowView(
-                    iconName: "link",
-                    title: "winegstreamer.so Link (LC_RPATH)",
-                    subtitle: "In-place Mach-O rpath linking to GStreamer.framework",
-                    badgeText: vm.status.hasRpath ? "Linked" : "Unpatched",
-                    isOk: vm.status.hasRpath
-                )
-                ComponentRowView(
-                    iconName: "cpu.fill",
-                    title: "Apple D3DMetal (Game Porting Toolkit)",
-                    subtitle: "Validated DirectX 12 to Metal runtime (Protected)",
-                    badgeText: vm.status.d3dMetalVersion,
-                    isOk: vm.status.hasD3DMetal
-                )
-                ComponentRowView(
-                    iconName: "gauge.with.needle.fill",
-                    title: "DXMT (DirectX 11 to Metal)",
-                    subtitle: "High-performance Metal backend for DirectX 11 in lib/dxmt",
-                    badgeText: vm.status.dxmtVersion,
-                    isOk: vm.status.hasDXMT,
-                    showDivider: false
-                )
+        Form {
+            Section {
+                LabeledContent("GStreamer + FFmpeg") {
+                    statusBadge(text: vm.status.gstreamerVersion, ok: vm.status.hasGStreamer)
+                }
+                LabeledContent("winegstreamer.so Link") {
+                    statusBadge(text: vm.status.hasRpath ? "Linked" : "Unpatched", ok: vm.status.hasRpath)
+                }
+                LabeledContent("Apple D3DMetal") {
+                    statusBadge(text: vm.status.d3dMetalVersion, ok: vm.status.hasD3DMetal)
+                }
+                LabeledContent("DXMT (DirectX 11 to Metal)") {
+                    statusBadge(text: vm.status.dxmtVersion, ok: vm.status.hasDXMT)
+                }
+            } header: {
+                HStack {
+                    Text("\(vm.selectedCrossOverName) Runtime")
+                    Spacer()
+                    Text(vm.status.isReady ? "Up to Date" : "Patch Available")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
             }
 
-            CardGroupBox(title: "Patch Options (Applies to \(vm.selectedCrossOverName))") {
-                ToggleRowView(
-                    iconName: "arrow.down.circle.fill",
-                    title: "Full GStreamer + FFmpeg Runtime",
-                    description: "Downloads latest Sikarugir-App build with H.264/HEVC/VP9 support",
-                    isOn: $vm.updateGStreamer,
-                    isEnabled: !vm.isBusy
-                )
-                ToggleRowView(
-                    iconName: "arrow.triangle.2.circlepath",
-                    title: "Latest DXMT Builtin Release",
-                    description: "Fetches official 3Shain/dxmt release to upgrade Direct3D 11",
-                    isOn: $vm.updateDXMT,
-                    isEnabled: !vm.isBusy
-                )
-                ToggleRowView(
-                    iconName: "circle.grid.2x2.fill",
-                    title: "Latest DXVK-macOS",
-                    description: "Updates Vulkan D3D9/D3D10/D3D11 fallback libraries in lib/dxvk",
-                    isOn: $vm.updateDXVK,
-                    isEnabled: !vm.isBusy
-                )
-                ToggleRowView(
-                    iconName: "bolt.fill",
-                    title: "Enable MSync + Rosetta 2 AVX",
-                    description: "Writes WINEMSYNC=1 and ROSETTA_ADVERTISE_AVX=1 to existing bottles",
-                    isOn: $vm.enableAVXAndMSync,
-                    isEnabled: !vm.isBusy,
-                    showDivider: false
-                )
+            Section("Patch Options") {
+                Toggle("Full GStreamer + FFmpeg Runtime", isOn: $vm.updateGStreamer)
+                    .disabled(vm.isBusy)
+                Toggle("Latest DXMT Builtin Release", isOn: $vm.updateDXMT)
+                    .disabled(vm.isBusy)
+                Toggle("Latest DXVK-macOS", isOn: $vm.updateDXVK)
+                    .disabled(vm.isBusy)
+                Toggle("Enable MSync + Rosetta 2 AVX", isOn: $vm.enableAVXAndMSync)
+                    .disabled(vm.isBusy)
             }
         }
+        .formStyle(.grouped)
     }
 
     private var optimizationsView: some View {
-        VStack(spacing: 12) {
-            CardGroupBox(title: "Gaming & Performance Tweaks", trailingText: "\(vm.status.bottleCount) Bottles Target") {
-                ToggleRowView(
-                    iconName: "chart.xyaxis.line",
-                    title: "Apple Metal Performance HUD",
-                    description: "Overlay real-time FPS, frame pacing graph, and GPU/VRAM load",
-                    isOn: $vm.toggleMetalHUD,
-                    isEnabled: !vm.isBusy
-                )
-                ToggleRowView(
-                    iconName: "sparkles.tv.fill",
-                    title: "Spoof NVIDIA RTX for D3DMetal",
-                    description: "Reports RTX 4090 (0x10DE) to bypass UE5 driver warnings & unlock DLSS",
-                    isOn: $vm.toggleNvidiaSpoof,
-                    isEnabled: !vm.isBusy
-                )
-                ToggleRowView(
-                    iconName: "gamecontroller.fill",
-                    title: "Enable macOS Game Mode for Games",
-                    description: "Tags CrossOver and game launchers with public.app-category.games",
-                    isOn: $vm.toggleGameMode,
-                    isEnabled: !vm.isBusy,
-                    showDivider: false
-                )
+        Form {
+            Section("Graphics & System Integration") {
+                Toggle("Apple Metal Performance HUD", isOn: $vm.toggleMetalHUD)
+                    .disabled(vm.isBusy)
+                Toggle("macOS Game Mode", isOn: $vm.toggleGameMode)
+                    .disabled(vm.isBusy)
+                Toggle("D3DMetal NVIDIA RTX Spoofing", isOn: $vm.toggleNvidiaSpoof)
+                    .disabled(vm.isBusy)
+                Toggle("MSync + Rosetta 2 AVX", isOn: $vm.enableAVXAndMSync)
+                    .disabled(vm.isBusy)
             }
-
         }
+        .formStyle(.grouped)
     }
 
     private var gameFixesView: some View {
-        VStack(spacing: 12) {
-            CardGroupBox(title: "Downloadable Game-Specific Add-Ons", trailingText: "GitHub") {
-                ForEach(Array(GameFixAddon.catalog.enumerated()), id: \.element.id) { idx, addon in
-                    VStack(spacing: 0) {
-                        HStack(spacing: 12) {
-                            IconWellView(systemName: addon.iconName)
-
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(addon.title)
-                                    .font(.body)
-                                Text(addon.subtitle)
-                                    .font(.callout)
-                                    .foregroundColor(.secondary)
-                            }
-
-                            Spacer(minLength: 12)
-
-                            Button(addon.isDownloaded ? "Re-Apply" : "Download & Run") {
-                                vm.runAddon(addon)
-                            }
-                            .buttonStyle(.bordered)
-                            .disabled(vm.isBusy || !vm.status.crossoverExists)
+        Form {
+            Section("Downloadable Game-Specific Add-Ons") {
+                ForEach(GameFixAddon.catalog) { addon in
+                    LabeledContent {
+                        Button(addon.isDownloaded ? "Re-Apply" : "Download & Run") {
+                            vm.runAddon(addon)
                         }
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 10)
-
-                        if idx < GameFixAddon.catalog.count - 1 {
-                            Divider()
-                                .padding(.leading, 52)
-                        }
+                        .disabled(vm.isBusy || !vm.status.crossoverExists)
+                    } label: {
+                        Text(addon.title)
+                        Text(addon.subtitle)
                     }
                 }
             }
         }
+        .formStyle(.grouped)
     }
 
     private var maintenanceView: some View {
-        VStack(spacing: 12) {
-            CardGroupBox(title: "Storage & Shader Caches", trailingText: vm.status.formattedCacheSize) {
-                HStack(spacing: 12) {
-                    IconWellView(systemName: "trash")
-
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("D3DMetal Shaders & GStreamer Registry")
-                            .font(.system(size: 13, weight: .medium))
-                        Text("\(vm.status.formattedCacheSize) currently cached in /var/folders & Application Support")
-                            .font(.system(size: 11))
-                            .foregroundColor(.secondary)
+        Form {
+            Section("Shader & Registry Caches") {
+                LabeledContent("Cached Data") {
+                    HStack(spacing: 12) {
+                        Text(vm.status.formattedCacheSize)
+                            .foregroundStyle(.secondary)
+                        Button("Purge...", role: .destructive) {
+                            isConfirmingCachePurge = true
+                        }
+                        .disabled(vm.isBusy)
                     }
-                    Spacer()
                 }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 10)
             }
 
-            CardGroupBox(title: "Activity & Execution Log", trailingText: "\(vm.logs.count) lines") {
-                VStack(spacing: 0) {
-                    HStack {
-                        Text("Console")
-                            .font(.system(size: 11, weight: .semibold))
-                            .foregroundColor(.secondary)
-                        Spacer()
-                        Button(action: { vm.copyLogs() }) {
-                            Label("Copy", systemImage: "doc.on.doc")
-                                .font(.system(size: 11))
-                        }
-                        .buttonStyle(.borderless)
-                        .disabled(vm.logs.isEmpty)
-
-                        Button(action: { vm.clearLogs() }) {
-                            Label("Clear", systemImage: "trash")
-                                .font(.system(size: 11))
-                        }
-                        .buttonStyle(.borderless)
-                        .disabled(vm.logs.isEmpty)
-                    }
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 6)
-                    .background(Color(nsColor: .controlBackgroundColor))
-
-                    Divider()
-
-                    ScrollViewReader { proxy in
-                        ScrollView {
-                            LazyVStack(alignment: .leading, spacing: 3) {
-                                if vm.logs.isEmpty {
-                                    Text("No recent activity. Ready.")
+            Section {
+                ScrollViewReader { proxy in
+                    ScrollView {
+                        LazyVStack(alignment: .leading, spacing: 3) {
+                            if vm.logs.isEmpty {
+                                Text("No recent activity.")
+                                    .font(.system(size: 11, design: .monospaced))
+                                    .foregroundStyle(.secondary)
+                            } else {
+                                ForEach(Array(vm.logs.enumerated()), id: \.offset) { idx, line in
+                                    Text(line)
                                         .font(.system(size: 11, design: .monospaced))
-                                        .foregroundColor(.secondary)
-                                        .padding(10)
-                                } else {
-                                    ForEach(Array(vm.logs.enumerated()), id: \.offset) { idx, line in
-                                        Text(line)
-                                            .font(.system(size: 11, design: .monospaced))
-                                            .foregroundColor((line.contains("[Error]") || line.contains("❌")) ? .red : ((line.contains("[OK]") || line.contains("✅")) ? .green : .primary))
-                                            .frame(maxWidth: .infinity, alignment: .leading)
-                                            .id(idx)
-                                    }
+                                        .foregroundColor((line.contains("[Error]") || line.contains("❌")) ? .red : ((line.contains("[OK]") || line.contains("✅")) ? .green : .primary))
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                        .id(idx)
                                 }
                             }
-                            .padding(8)
                         }
-                        .frame(height: 220)
-                        .background(Color(nsColor: .textBackgroundColor).opacity(0.85))
-                        .onChange(of: vm.logs.count) { _ in
-                            if let last = vm.logs.indices.last {
-                                withAnimation {
-                                    proxy.scrollTo(last, anchor: .bottom)
-                                }
-                            }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    .frame(height: 220)
+                    .onChange(of: vm.logs.count) { _ in
+                        if let last = vm.logs.indices.last {
+                            proxy.scrollTo(last, anchor: .bottom)
                         }
                     }
+                }
+            } header: {
+                HStack {
+                    Text("Console")
+                    Spacer()
+                    Button("Copy") { vm.copyLogs() }
+                        .buttonStyle(.borderless)
+                        .disabled(vm.logs.isEmpty)
+                    Button("Clear") { vm.clearLogs() }
+                        .buttonStyle(.borderless)
+                        .disabled(vm.logs.isEmpty)
                 }
             }
         }
+        .formStyle(.grouped)
     }
 }
 
@@ -1109,8 +861,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         let contentView = ContentView()
         window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 740, height: 740),
-            styleMask: [.titled, .closable, .miniaturizable, .resizable],
+            contentRect: NSRect(x: 0, y: 0, width: 800, height: 560),
+            styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView],
             backing: .buffered,
             defer: false
         )
@@ -1119,10 +871,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         window.toolbarStyle = .unified
         window.titlebarSeparatorStyle = .automatic
         window.isMovableByWindowBackground = true
-        window.minSize = NSSize(width: 680, height: 680)
+        window.minSize = NSSize(width: 740, height: 520)
 
         window.contentViewController = NSHostingController(rootView: contentView)
-        window.setContentSize(NSSize(width: 740, height: 740))
+        window.setContentSize(NSSize(width: 800, height: 560))
         window.center()
         window.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
