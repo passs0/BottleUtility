@@ -694,7 +694,7 @@ struct ContentView: View {
                 } else {
                     ZStack {
                         RoundedRectangle(cornerRadius: 10, style: .continuous)
-                            .fill(LinearGradient(colors: [.orange, .yellow], startPoint: .top, endPoint: .bottom))
+                            .fill(Color.accentColor.gradient)
                             .frame(width: 42, height: 42)
                         Image(systemName: "bandage.fill")
                             .font(.system(size: 18, weight: .bold))
@@ -707,12 +707,11 @@ struct ContentView: View {
                         Text("HexAid")
                             .font(.title3.weight(.semibold))
                         Text("v2.4.0")
-                            .font(.caption.weight(.semibold))
+                            .font(.caption.weight(.medium))
                             .padding(.horizontal, 6)
                             .padding(.vertical, 2)
-                            .background(Color.orange.opacity(0.18))
-                            .foregroundColor(.orange)
-                            .clipShape(Capsule())
+                            .background(.quaternary, in: Capsule())
+                            .foregroundColor(.secondary)
                     }
                     HStack(spacing: 6) {
                         if vm.installedCrossOvers.count > 1 {
@@ -745,10 +744,9 @@ struct ContentView: View {
 
                 Button(action: { vm.refreshStatus() }) {
                     Image(systemName: "arrow.clockwise")
-                        .font(.system(size: 12, weight: .medium))
-                        .foregroundColor(.secondary)
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.bordered)
+                .controlSize(.small)
                 .keyboardShortcut("r", modifiers: .command)
                 .disabled(vm.isBusy)
                 .help("Refresh status (⌘R)")
@@ -790,56 +788,49 @@ struct ContentView: View {
 
             // Persistent Sticky Bottom Action Bar
             HStack(spacing: 12) {
+                if vm.isBusy {
+                    ProgressView()
+                        .controlSize(.small)
+                } else {
+                    Image(systemName: vm.status.crossoverExists ? (vm.status.isReady ? "checkmark.circle.fill" : "info.circle") : "exclamationmark.triangle.fill")
+                        .foregroundStyle(vm.status.crossoverExists ? (vm.status.isReady ? .green : .secondary) : .orange)
+                }
+
+                Text(vm.status.crossoverExists ? (vm.status.isReady ? "\(vm.selectedCrossOverName) is patched" : "Ready to patch \(vm.selectedCrossOverName)") : "CrossOver not found")
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+
+                Spacer()
+
                 switch vm.activeTab {
                 case .patcher:
                     Button(action: { vm.runPatch() }) {
-                        HStack(spacing: 8) {
-                            if vm.isBusy {
-                                ProgressView()
-                                    .controlSize(.small)
-                            } else {
-                                Image(systemName: "bandage.fill")
-                            }
-                            Text(vm.isBusy ? "Patching \(vm.selectedCrossOverName)..." : (vm.status.isReady ? "Re-Apply Patches to \(vm.selectedCrossOverName)" : "Patch \(vm.selectedCrossOverName) Now"))
-                                .font(.system(size: 13, weight: .semibold))
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 4)
+                        Label(
+                            vm.isBusy ? "Patching..." : (vm.status.isReady ? "Re-Apply Patches" : "Patch \(vm.selectedCrossOverName)"),
+                            systemImage: "bandage.fill"
+                        )
                     }
                     .buttonStyle(.borderedProminent)
-                    .tint(.orange)
                     .controlSize(.large)
                     .disabled(vm.isBusy || !vm.status.crossoverExists)
 
                 case .optimizations:
                     Button(action: { vm.applyOptimizations() }) {
-                        HStack(spacing: 8) {
-                            if vm.isBusy {
-                                ProgressView()
-                                    .controlSize(.small)
-                            } else {
-                                Image(systemName: "bolt.fill")
-                            }
-                            Text(vm.isBusy ? "Applying Optimizations..." : "Apply Optimizations to Bottles")
-                                .font(.system(size: 13, weight: .semibold))
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 4)
+                        Label(
+                            vm.isBusy ? "Applying..." : "Apply Optimizations",
+                            systemImage: "bolt.fill"
+                        )
                     }
                     .buttonStyle(.borderedProminent)
-                    .tint(.orange)
                     .controlSize(.large)
                     .disabled(vm.isBusy || !vm.status.crossoverExists)
 
                 case .maintenance:
                     Button(action: { isConfirmingCachePurge = true }) {
-                        HStack(spacing: 8) {
-                            Image(systemName: "trash")
-                            Text("Purge Shader & Registry Caches (\(vm.status.formattedCacheSize))")
-                                .font(.system(size: 13, weight: .semibold))
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 4)
+                        Label(
+                            "Purge Caches (\(vm.status.formattedCacheSize))",
+                            systemImage: "trash"
+                        )
                     }
                     .buttonStyle(.bordered)
                     .controlSize(.large)
@@ -851,7 +842,7 @@ struct ContentView: View {
             .background(Color(nsColor: .windowBackgroundColor))
         }
         .frame(minWidth: 680, idealWidth: 740, maxWidth: .infinity,
-               minHeight: 580, idealHeight: 760, maxHeight: .infinity)
+               minHeight: 620, idealHeight: 760, maxHeight: .infinity)
         .confirmationDialog(
             "Purge Shader and Registry Caches?",
             isPresented: $isConfirmingCachePurge,
