@@ -36,6 +36,7 @@ struct ComponentStatus {
 enum ActiveTab: String, CaseIterable, Identifiable {
     case patcher = "Patcher"
     case optimizations = "Optimizations"
+    case gameFixes = "Game Fixes"
     case maintenance = "Activity & Caches"
 
     var id: String { rawValue }
@@ -43,9 +44,48 @@ enum ActiveTab: String, CaseIterable, Identifiable {
         switch self {
         case .patcher: return "bandage.fill"
         case .optimizations: return "bolt.fill"
+        case .gameFixes: return "gamecontroller.fill"
         case .maintenance: return "terminal.fill"
         }
     }
+}
+
+struct GameFixAddon: Identifiable {
+    let id: String
+    let title: String
+    let subtitle: String
+    let repo: String
+    let iconName: String
+
+    var tarballURL: String {
+        "https://github.com/passs0/\(repo)/archive/refs/heads/main.tar.gz"
+    }
+
+    var localDirectory: URL {
+        let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
+        return appSupport.appendingPathComponent("HexAid/Addons/\(id)", isDirectory: true)
+    }
+
+    var isDownloaded: Bool {
+        FileManager.default.fileExists(atPath: localDirectory.appendingPathComponent("install.sh").path)
+    }
+
+    static let catalog: [GameFixAddon] = [
+        GameFixAddon(
+            id: "re9",
+            title: "Resident Evil Requiem (RE9)",
+            subtitle: "Fixes D3DMetal/MetalFX stability, audio popping, Bluetooth DualSense, and window focus",
+            repo: "RE9-CrossOver-Fix",
+            iconName: "cross.case.fill"
+        ),
+        GameFixAddon(
+            id: "sh2r",
+            title: "Silent Hill 2 Remake (GOG)",
+            subtitle: "Fixes launch focus, cursor hiding, and UE5 D3D11/DXMT frame pacing",
+            repo: "SH2R-CrossOver-Fix",
+            iconName: "display"
+        )
+    ]
 }
 
 struct CrossOverInstallation: Identifiable, Hashable, Sendable {
@@ -403,7 +443,7 @@ final class HexAidViewModel: ObservableObject {
             codesign --force --deep --sign - "$CX_APP"
             rm -f "$HOME/Library/Application Support/CrossOver/gstreamer-1.0-registry.x86_64.bin"
 
-            echo "✅ HexAid patch complete! All components verified."
+            echo "[OK] HexAid patch complete. All components verified."
             """
 
             await self.executeShellScript(script)
@@ -484,7 +524,7 @@ final class HexAidViewModel: ObservableObject {
                 echo "macOS Game Mode successfully configured!"
             fi
 
-            echo "✅ All optimizations applied successfully."
+            echo "[OK] All optimizations applied successfully."
             """
 
             await self.executeShellScript(script)
@@ -501,7 +541,32 @@ final class HexAidViewModel: ObservableObject {
             let script = """
             rm -f "$HOME/Library/Application Support/CrossOver/gstreamer-1.0-registry.x86_64.bin"
             find /var/folders -name "*d3dm*" -exec rm -rf {} + 2>/dev/null || true
-            echo "✅ Successfully purged GStreamer registry & D3DMetal shader caches."
+            echo "[OK] Successfully purged GStreamer registry & D3DMetal shader caches."
+            """
+            await self.executeShellScript(script)
+        }
+    }
+
+    func runAddon(_ addon: GameFixAddon) {
+        guard !isBusy else { return }
+        isBusy = true
+        activeTab = .maintenance
+        logs.removeAll()
+        appendLog("Downloading \(addon.title) add-on from GitHub...")
+
+        let dirPath = addon.localDirectory.path
+        let url = addon.tarballURL
+        Task.detached {
+            let script = """
+            set -e
+            ADDON_DIR="\(dirPath)"
+            rm -rf "$ADDON_DIR"
+            mkdir -p "$ADDON_DIR"
+            curl -fsSL "\(url)" | tar -xz -C "$ADDON_DIR" --strip-components=1
+            cd "$ADDON_DIR"
+            chmod +x install.sh
+            zsh ./install.sh
+            echo "[OK] \(addon.title) fix completed."
             """
             await self.executeShellScript(script)
         }
@@ -537,14 +602,14 @@ final class HexAidViewModel: ObservableObject {
                 self.isBusy = false
                 self.refreshStatus()
                 if code != 0 {
-                    self.appendLog("❌ Process exited with code \(code)")
+                    self.appendLog("[Error] Process exited with code \(code)")
                 }
             }
         } catch {
             handle.readabilityHandler = nil
             await MainActor.run {
                 self.isBusy = false
-                self.appendLog("❌ Error: \(error.localizedDescription)")
+                self.appendLog("[Error] \(error.localizedDescription)")
             }
         }
     }
@@ -692,6 +757,8 @@ struct ContentView: View {
                         patcherView
                     case .optimizations:
                         optimizationsView
+                    case .gameFixes:
+                        gameFixesView
                     case .maintenance:
                         maintenanceView
                     }
@@ -742,6 +809,11 @@ struct ContentView: View {
                     .controlSize(.large)
                     .disabled(vm.isBusy || !vm.status.crossoverExists)
 
+                case .gameFixes:
+                    Text("Downloaded to ~/Library/Application Support/HexAid/Addons")
+                        .font(.caption)
+                        .foregroundStyle(.tertiary)
+
                 case .maintenance:
                     Button(action: { isConfirmingCachePurge = true }) {
                         Label(
@@ -768,7 +840,7 @@ struct ContentView: View {
                     }
                 }
                 .pickerStyle(.segmented)
-                .frame(width: 340)
+                .frame(width: 420)
             }
 
             ToolbarItemGroup(placement: .primaryAction) {
@@ -910,6 +982,43 @@ struct ContentView: View {
         }
     }
 
+    private var gameFixesView: some View {
+        VStack(spacing: 12) {
+            CardGroupBox(title: "Downloadable Game-Specific Add-Ons", trailingText: "GitHub") {
+                ForEach(Array(GameFixAddon.catalog.enumerated()), id: \.element.id) { idx, addon in
+                    VStack(spacing: 0) {
+                        HStack(spacing: 12) {
+                            IconWellView(systemName: addon.iconName)
+
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(addon.title)
+                                    .font(.body)
+                                Text(addon.subtitle)
+                                    .font(.callout)
+                                    .foregroundColor(.secondary)
+                            }
+
+                            Spacer(minLength: 12)
+
+                            Button(addon.isDownloaded ? "Re-Apply" : "Download & Run") {
+                                vm.runAddon(addon)
+                            }
+                            .buttonStyle(.bordered)
+                            .disabled(vm.isBusy || !vm.status.crossoverExists)
+                        }
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 10)
+
+                        if idx < GameFixAddon.catalog.count - 1 {
+                            Divider()
+                                .padding(.leading, 52)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     private var maintenanceView: some View {
         VStack(spacing: 12) {
             CardGroupBox(title: "Storage & Shader Caches", trailingText: vm.status.formattedCacheSize) {
@@ -968,7 +1077,7 @@ struct ContentView: View {
                                     ForEach(Array(vm.logs.enumerated()), id: \.offset) { idx, line in
                                         Text(line)
                                             .font(.system(size: 11, design: .monospaced))
-                                            .foregroundColor(line.contains("❌") ? .red : (line.contains("✅") ? .green : .primary))
+                                            .foregroundColor((line.contains("[Error]") || line.contains("❌")) ? .red : ((line.contains("[OK]") || line.contains("✅")) ? .green : .primary))
                                             .frame(maxWidth: .infinity, alignment: .leading)
                                             .id(idx)
                                     }
