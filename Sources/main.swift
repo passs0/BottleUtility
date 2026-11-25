@@ -684,90 +684,6 @@ struct ContentView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            // App Header Bar
-            HStack(spacing: 12) {
-                if let appIcon = NSApp.applicationIconImage {
-                    Image(nsImage: appIcon)
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                        .frame(width: 42, height: 42)
-                } else {
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 10, style: .continuous)
-                            .fill(Color.accentColor.gradient)
-                            .frame(width: 42, height: 42)
-                        Image(systemName: "bandage.fill")
-                            .font(.system(size: 18, weight: .bold))
-                            .foregroundColor(.white)
-                    }
-                }
-
-                VStack(alignment: .leading, spacing: 2) {
-                    HStack(spacing: 8) {
-                        Text("HexAid")
-                            .font(.title3.weight(.semibold))
-                        Text("v2.4.0")
-                            .font(.caption.weight(.medium))
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 2)
-                            .background(.quaternary, in: Capsule())
-                            .foregroundColor(.secondary)
-                    }
-                    HStack(spacing: 6) {
-                        if vm.installedCrossOvers.count > 1 {
-                            Text("v\(vm.status.versionString) • \(vm.status.bottleCount) Bottle\(vm.status.bottleCount == 1 ? "" : "s")")
-                                .font(.system(size: 11.5))
-                                .foregroundColor(.secondary)
-
-                            Picker("", selection: $vm.selectedCrossOverPath) {
-                                ForEach(vm.installedCrossOvers) { installation in
-                                    Text(installation.displayName).tag(installation.path)
-                                }
-                            }
-                            .pickerStyle(.menu)
-                            .labelsHidden()
-                            .accessibilityLabel("CrossOver installation")
-                            .fixedSize()
-                            .disabled(vm.isBusy)
-                            .onChange(of: vm.selectedCrossOverPath) { _ in
-                                vm.refreshStatus()
-                            }
-                        } else {
-                            Text("\(vm.selectedCrossOverName) • v\(vm.status.versionString) • \(vm.status.bottleCount) Bottle\(vm.status.bottleCount == 1 ? "" : "s")")
-                                .font(.system(size: 11.5))
-                                .foregroundColor(.secondary)
-                        }
-                    }
-                }
-
-                Spacer()
-
-                Button(action: { vm.refreshStatus() }) {
-                    Image(systemName: "arrow.clockwise")
-                }
-                .buttonStyle(.bordered)
-                .controlSize(.small)
-                .keyboardShortcut("r", modifiers: .command)
-                .disabled(vm.isBusy)
-                .help("Refresh status (⌘R)")
-            }
-            .padding(.horizontal, 20)
-            .padding(.top, 14)
-            .padding(.bottom, 12)
-
-            // Segmented Tab Picker
-            Picker("", selection: $vm.activeTab) {
-                ForEach(ActiveTab.allCases) { tab in
-                    Label(tab.rawValue, systemImage: tab.iconName).tag(tab)
-                }
-            }
-            .pickerStyle(.segmented)
-            .labelsHidden()
-            .padding(.horizontal, 20)
-            .padding(.bottom, 14)
-
-            Divider()
-
             // Scrollable Workspace Content
             ScrollView(.vertical, showsIndicators: true) {
                 VStack(spacing: 14) {
@@ -842,7 +758,40 @@ struct ContentView: View {
             .background(Color(nsColor: .windowBackgroundColor))
         }
         .frame(minWidth: 680, idealWidth: 740, maxWidth: .infinity,
-               minHeight: 620, idealHeight: 760, maxHeight: .infinity)
+               minHeight: 580, idealHeight: 720, maxHeight: .infinity)
+        .toolbar {
+            ToolbarItem(placement: .principal) {
+                Picker("Workspace", selection: $vm.activeTab) {
+                    ForEach(ActiveTab.allCases) { tab in
+                        Text(tab.rawValue).tag(tab)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .frame(width: 340)
+            }
+
+            ToolbarItemGroup(placement: .primaryAction) {
+                if vm.installedCrossOvers.count > 1 {
+                    Picker("CrossOver", selection: $vm.selectedCrossOverPath) {
+                        ForEach(vm.installedCrossOvers) { installation in
+                            Text(installation.displayName).tag(installation.path)
+                        }
+                    }
+                    .pickerStyle(.menu)
+                    .disabled(vm.isBusy)
+                    .onChange(of: vm.selectedCrossOverPath) { _ in
+                        vm.refreshStatus()
+                    }
+                }
+
+                Button(action: { vm.refreshStatus() }) {
+                    Label("Refresh", systemImage: "arrow.clockwise")
+                }
+                .keyboardShortcut("r", modifiers: .command)
+                .disabled(vm.isBusy)
+                .help("Refresh status (⌘R)")
+            }
+        }
         .confirmationDialog(
             "Purge Shader and Registry Caches?",
             isPresented: $isConfirmingCachePurge,
@@ -1057,10 +1006,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         )
         window.center()
         window.title = "HexAid"
+        window.toolbar = NSToolbar()
         window.toolbarStyle = .unified
-        window.titlebarSeparatorStyle = .none
+        window.titlebarSeparatorStyle = .automatic
         window.isMovableByWindowBackground = true
-        window.minSize = NSSize(width: 680, height: 620)
+        window.minSize = NSSize(width: 680, height: 580)
 
         window.contentViewController = NSHostingController(rootView: contentView)
         window.makeKeyAndOrderFront(nil)
