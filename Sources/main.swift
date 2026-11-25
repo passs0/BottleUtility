@@ -697,7 +697,8 @@ struct ContentView: View {
                     }
                 }
                 .padding(.horizontal, 18)
-                .padding(.vertical, 14)
+                .padding(.top, 16)
+                .padding(.bottom, 16)
             }
 
             Divider()
@@ -754,11 +755,11 @@ struct ContentView: View {
                 }
             }
             .padding(.horizontal, 18)
-            .padding(.vertical, 12)
+            .padding(.vertical, 14)
             .background(Color(nsColor: .windowBackgroundColor))
         }
         .frame(minWidth: 680, idealWidth: 740, maxWidth: .infinity,
-               minHeight: 580, idealHeight: 720, maxHeight: .infinity)
+               minHeight: 680, idealHeight: 740, maxHeight: .infinity)
         .toolbar {
             ToolbarItem(placement: .principal) {
                 Picker("Workspace", selection: $vm.activeTab) {
@@ -999,20 +1000,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         let contentView = ContentView()
         window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 740, height: 760),
+            contentRect: NSRect(x: 0, y: 0, width: 740, height: 740),
             styleMask: [.titled, .closable, .miniaturizable, .resizable],
             backing: .buffered,
             defer: false
         )
-        window.center()
         window.title = "HexAid"
         window.toolbar = NSToolbar()
         window.toolbarStyle = .unified
         window.titlebarSeparatorStyle = .automatic
         window.isMovableByWindowBackground = true
-        window.minSize = NSSize(width: 680, height: 580)
+        window.minSize = NSSize(width: 680, height: 680)
 
         window.contentViewController = NSHostingController(rootView: contentView)
+        window.setContentSize(NSSize(width: 740, height: 740))
+        window.center()
         window.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
     }
