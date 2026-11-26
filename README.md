@@ -49,7 +49,9 @@ cp -R build/HexAid.app /Applications/
 
 Inspired by [CXPatcher](https://github.com/italomandara/CXPatcher) and [Procyon](https://github.com/italomandara/Procyon) by [@italomandara](https://github.com/italomandara), [3Shain/dxmt](https://github.com/3Shain/dxmt), [Sikarugir-App/gstreamer](https://github.com/Sikarugir-App/gstreamer), and [Gcenx/DXVK-macOS](https://github.com/Gcenx/DXVK-macOS).
 
-**AI scope:** All code, assets, and documentation were generated with [Google Antigravity](https://antigravity.google); human involvement was limited to direction and hands-on testing.
+## AI Scope
+
+All code, UI/assets, and documentation in this project were generated with [Google Antigravity](https://antigravity.google). Human involvement was limited to direction, design feedback, and hands-on testing.
 
 ## License
 
