@@ -47,7 +47,9 @@ cp -R build/HexAid.app /Applications/
 
 ## Credits
 
-Inspired by [CXPatcher](https://github.com/italomandara/CXPatcher) and [Procyon](https://github.com/italomandara/Procyon) by [@italomandara](https://github.com/italomandara), [3Shain/dxmt](https://github.com/3Shain/dxmt), [Sikarugir-App/gstreamer](https://github.com/Sikarugir-App/gstreamer), and [Gcenx/DXVK-macOS](https://github.com/Gcenx/DXVK-macOS). Built with [Google Antigravity](https://antigravity.google).
+Inspired by [CXPatcher](https://github.com/italomandara/CXPatcher) and [Procyon](https://github.com/italomandara/Procyon) by [@italomandara](https://github.com/italomandara), [3Shain/dxmt](https://github.com/3Shain/dxmt), [Sikarugir-App/gstreamer](https://github.com/Sikarugir-App/gstreamer), and [Gcenx/DXVK-macOS](https://github.com/Gcenx/DXVK-macOS).
+
+**AI scope:** All code, assets, and documentation were generated with [Google Antigravity](https://antigravity.google); human involvement was limited to direction and hands-on testing.
 
 ## License
 
