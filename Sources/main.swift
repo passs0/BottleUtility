@@ -178,7 +178,7 @@ final class HexAidViewModel: ObservableObject {
                 self.toggleMetalHUD = next.metalHudEnabled
                 self.toggleNvidiaSpoof = next.nvidiaSpoofEnabled
                 self.toggleGameMode = next.gameModeEnabled
-                self.enableAVXAndMSync = next.avxMsyncEnabled
+                self.enableAVXAndMSync = next.avxAndMsyncEnabled
             }
         }
     }
