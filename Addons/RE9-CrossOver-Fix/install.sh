@@ -138,13 +138,16 @@ PY
   echo "✅ Verified Wine Mac Driver settings in user.reg (RetinaMode=\"n\")"
 fi
 
-# 6. Apply tuned graphics, upscaling & worker-thread settings in config.ini
+# 6. Apply tuned graphics, upscaling & P-core worker-thread settings in config.ini
 CONFIG_INI="$RE9_DIR/config.ini"
-if [[ -f "$CONFIG_INI" ]]; then
-  python3 - "$CONFIG_INI" "$SCRIPT_DIR/config/config.ini" <<'PY'
-import sys
+P_CORES="$(sysctl -n hw.perflevel0.logicalcpu 2>/dev/null || echo 6)"
+[[ "$P_CORES" =~ ^[0-9]+$ ]] || P_CORES=6
 
-target_path, ref_path = sys.argv[1], sys.argv[2]
+if [[ -f "$CONFIG_INI" ]]; then
+  python3 - "$CONFIG_INI" "$SCRIPT_DIR/config/config.ini" "$P_CORES" <<'PY'
+import sys, re
+
+target_path, ref_path, p_cores = sys.argv[1], sys.argv[2], sys.argv[3]
 
 def parse_sections(path):
     sections = {}
@@ -168,11 +171,43 @@ def parse_sections(path):
 t_order, t_sec = parse_sections(target_path)
 r_order, r_sec = parse_sections(ref_path)
 
+# Pick best FullScreenDisplayMode from the user's actual [Render/Display] modes (highest refresh at ~1512x982 or highest available <= 1920)
+best_mode = None
+if "[Render/Display]" in t_sec:
+    modes = {}
+    for k, v in t_sec["[Render/Display]"]:
+        m = re.match(r"DisplayMode(\d+)_(Width|Height|RefreshRateNumerator|RefreshRateDenominator)$", k)
+        if m:
+            idx, field = int(m.group(1)), m.group(2)
+            modes.setdefault(idx, {})[field] = int(v)
+    candidates = []
+    for idx, info in modes.items():
+        w = info.get("Width", 0)
+        h = info.get("Height", 0)
+        num = info.get("RefreshRateNumerator", 60000)
+        den = max(info.get("RefreshRateDenominator", 1000), 1)
+        hz = num / den
+        if 1280 <= w <= 1920 and h >= 720:
+            # Prefer exact 1512x982 if present, otherwise largest clean mode <= 1920 at highest refresh
+            pref = 1 if (w == 1512 and h == 982) else 0
+            candidates.append((pref, w * h, hz, idx))
+    if candidates:
+        candidates.sort()
+        best_mode = str(candidates[-1][3])
+
 # Replace [GameOption], [Render], [RenderConfig], [RenderDeviceDirectX12] from reference
 # while preserving hardware-specific [Render/Adapter] and [Render/Display]
 for sec in ["[GameOption]", "[Render]", "[RenderConfig]", "[RenderDeviceDirectX12]"]:
     if sec in r_sec:
-        t_sec[sec] = r_sec[sec]
+        updated = []
+        for k, v in r_sec[sec]:
+            if sec == "[Render]" and k == "ParallelBuildProcessorCount":
+                updated.append((k, p_cores))
+            elif sec == "[RenderConfig]" and k == "FullScreenDisplayMode" and best_mode is not None:
+                updated.append((k, best_mode))
+            else:
+                updated.append((k, v))
+        t_sec[sec] = updated
         if sec not in t_order:
             t_order.append(sec)
 
@@ -185,7 +220,7 @@ for sec in t_order:
 with open(target_path, "w", encoding="utf-8", newline="\r\n") as f:
     f.write("\n".join(out_lines) + "\n")
 PY
-  echo "✅ Applied optimized graphics & stability profile in config.ini"
+  echo "✅ Applied optimized graphics, FullScreen cursor capture & P-core ($P_CORES) profile in config.ini"
 else
   cp "$SCRIPT_DIR/config/config.ini" "$CONFIG_INI"
   echo "✅ Installed default optimized config.ini"
