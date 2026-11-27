@@ -1,5 +1,6 @@
 import Cocoa
 import SwiftUI
+import UniformTypeIdentifiers
 
 // MARK: - Component Status Model
 
@@ -11,6 +12,8 @@ struct ComponentStatus {
     var hasRpath: Bool = false
     var hasD3DMetal: Bool = false
     var d3dMetalVersion: String = "Missing"
+    var hasD3DMetalBackup: Bool = false
+    var d3dMetalBackupVersion: String = ""
     var hasDXMT: Bool = false
     var dxmtVersion: String = "Missing"
     var hasDXVK: Bool = false
@@ -218,6 +221,14 @@ final class HexAidViewModel: ObservableObject {
         "'" + value.replacingOccurrences(of: "'", with: "'\\''") + "'"
     }
 
+    nonisolated static func gptkBackupDir(for cxAppPath: String) -> String {
+        let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
+        let name = CrossOverInstallation(path: cxAppPath).displayName
+        return appSupport
+            .appendingPathComponent("HexAid/Backups/\(name)/apple_gptk", isDirectory: true)
+            .path
+    }
+
     nonisolated static func bottlePath(for cxAppPath: String) -> String {
         let fallback = ("~/Library/Application Support/CrossOver/Bottles" as NSString).expandingTildeInPath
         let configPath = "\(cxAppPath)/Contents/SharedSupport/CrossOver/etc/CrossOver.conf"
@@ -298,6 +309,19 @@ final class HexAidViewModel: ObservableObject {
                     next.d3dMetalVersion = "v\(ver)"
                 } else {
                     next.d3dMetalVersion = "Installed (Protected)"
+                }
+            }
+
+            let backupBase = gptkBackupDir(for: cxAppPath)
+            let backupBin = "\(backupBase)/external/D3DMetal.framework/D3DMetal"
+            next.hasD3DMetalBackup = fm.fileExists(atPath: backupBin)
+            if next.hasD3DMetalBackup {
+                let backupPlist = "\(backupBase)/external/D3DMetal.framework/Resources/Info.plist"
+                if let backupDict = NSDictionary(contentsOfFile: backupPlist),
+                   let ver = backupDict["CFBundleShortVersionString"] as? String {
+                    next.d3dMetalBackupVersion = "v\(ver)"
+                } else {
+                    next.d3dMetalBackupVersion = "Stock"
                 }
             }
 
@@ -547,6 +571,170 @@ final class HexAidViewModel: ObservableObject {
         }
     }
 
+    func chooseAndInstallGPTK() {
+        guard !isBusy else { return }
+        let panel = NSOpenPanel()
+        panel.title = "Select Apple Game Porting Toolkit (.dmg)"
+        panel.message = "Choose the outer Game Porting Toolkit .dmg or inner Evaluation environment .dmg."
+        panel.canChooseFiles = true
+        panel.canChooseDirectories = false
+        panel.allowsMultipleSelection = false
+        if let dmgType = UTType(filenameExtension: "dmg") {
+            panel.allowedContentTypes = [dmgType]
+        }
+
+        if panel.runModal() == .OK, let url = panel.url {
+            installGPTK(from: url)
+        }
+    }
+
+    func installGPTK(from dmgURL: URL) {
+        guard !isBusy else { return }
+        isBusy = true
+        activeTab = .maintenance
+        logs.removeAll()
+        appendLog("Installing D3DMetal from \(dmgURL.lastPathComponent) into \(selectedCrossOverName)...")
+
+        let cxPath = cxAppPath
+        let backupDir = Self.gptkBackupDir(for: cxPath)
+        let dmgPath = dmgURL.path
+
+        Task.detached {
+            let quotedCX = Self.shellQuoted(cxPath)
+            let quotedDMG = Self.shellQuoted(dmgPath)
+            let quotedBackup = Self.shellQuoted(backupDir)
+            let script = """
+            set -e
+            setopt NULL_GLOB NO_NOMATCH
+
+            CX_APP=\(quotedCX)
+            DMG_PATH=\(quotedDMG)
+            BACKUP_DIR=\(quotedBackup)
+            TARGET_GPTK="$CX_APP/Contents/SharedSupport/CrossOver/lib64/apple_gptk"
+
+            OUTER_MOUNT=$(mktemp -d /tmp/hexaid_gptk_outer.XXXXXX)
+            INNER_MOUNT=""
+
+            cleanup() {
+                if [ -n "$INNER_MOUNT" ] && [ -d "$INNER_MOUNT" ]; then
+                    hdiutil detach "$INNER_MOUNT" -force >/dev/null 2>&1 || true
+                    rmdir "$INNER_MOUNT" >/dev/null 2>&1 || true
+                fi
+                if [ -n "$OUTER_MOUNT" ] && [ -d "$OUTER_MOUNT" ]; then
+                    hdiutil detach "$OUTER_MOUNT" -force >/dev/null 2>&1 || true
+                    rmdir "$OUTER_MOUNT" >/dev/null 2>&1 || true
+                fi
+            }
+            trap cleanup EXIT
+
+            echo "Mounting $(basename "$DMG_PATH")..."
+            yes | hdiutil attach "$DMG_PATH" -nobrowse -readonly -noverify -mountpoint "$OUTER_MOUNT" >/dev/null
+
+            FOUND_FW=$(find "$OUTER_MOUNT" -maxdepth 5 -type d -name "D3DMetal.framework" 2>/dev/null | head -n 1 || true)
+
+            if [ -z "$FOUND_FW" ]; then
+                INNER_DMG=$(find "$OUTER_MOUNT" -maxdepth 3 -type f -iname "*.dmg" 2>/dev/null | head -n 1 || true)
+                if [ -n "$INNER_DMG" ]; then
+                    echo "Found nested disk image: $(basename "$INNER_DMG"). Mounting..."
+                    INNER_MOUNT=$(mktemp -d /tmp/hexaid_gptk_inner.XXXXXX)
+                    yes | hdiutil attach "$INNER_DMG" -nobrowse -readonly -noverify -mountpoint "$INNER_MOUNT" >/dev/null
+                    FOUND_FW=$(find "$INNER_MOUNT" -maxdepth 5 -type d -name "D3DMetal.framework" 2>/dev/null | head -n 1 || true)
+                fi
+            fi
+
+            if [ -z "$FOUND_FW" ]; then
+                echo "[Error] Could not locate D3DMetal.framework inside the selected .dmg."
+                exit 1
+            fi
+
+            SRC_EXTERNAL=$(dirname "$FOUND_FW")
+            SRC_ROOT=$(dirname "$SRC_EXTERNAL")
+            SRC_WINE="$SRC_ROOT/wine"
+
+            if [ ! -f "$SRC_EXTERNAL/libd3dshared.dylib" ] || [ ! -d "$SRC_WINE" ]; then
+                echo "[Error] Incomplete GPTK package: expected external/libd3dshared.dylib alongside wine/ shims."
+                exit 1
+            fi
+
+            NEW_VER=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$FOUND_FW/Resources/Info.plist" 2>/dev/null || echo "Unknown")
+            MIN_OS=$(/usr/libexec/PlistBuddy -c "Print :MinimumOSVersion" "$FOUND_FW/Resources/Info.plist" 2>/dev/null || true)
+            CUR_OS=$(sw_vers -productVersion)
+
+            echo "Detected Apple D3DMetal v$NEW_VER (Minimum macOS: ${MIN_OS:-any}, Current macOS: $CUR_OS)"
+
+            if [ -n "$MIN_OS" ]; then
+                autoload -Uz is-at-least
+                if ! is-at-least "$MIN_OS" "$CUR_OS"; then
+                    echo "[Error] D3DMetal v$NEW_VER requires macOS $MIN_OS or newer (you are on $CUR_OS). Aborting safely."
+                    exit 1
+                fi
+            fi
+
+            if [ ! -f "$BACKUP_DIR/external/D3DMetal.framework/D3DMetal" ] && [ -d "$TARGET_GPTK" ]; then
+                echo "Backing up stock CrossOver D3DMetal to $BACKUP_DIR..."
+                mkdir -p "$BACKUP_DIR"
+                ditto "$TARGET_GPTK" "$BACKUP_DIR"
+            else
+                echo "Preserving existing stock D3DMetal backup."
+            fi
+
+            echo "Installing matched external/ and wine/ GPTK runtime into $CX_APP..."
+            mkdir -p "$TARGET_GPTK"
+            rm -rf "$TARGET_GPTK/external" "$TARGET_GPTK/wine"
+            ditto "$SRC_EXTERNAL" "$TARGET_GPTK/external"
+            ditto "$SRC_WINE" "$TARGET_GPTK/wine"
+
+            echo "Clearing quarantine, re-signing CrossOver, and purging D3DMetal shader caches..."
+            xattr -cr "$TARGET_GPTK"
+            codesign --force --deep --sign - "$CX_APP"
+            find /var/folders -name "*d3dm*" -exec rm -rf {} + 2>/dev/null || true
+
+            echo "[OK] Installed Apple D3DMetal v$NEW_VER cleanly! Use 'Restore Original' anytime to revert."
+            """
+            await self.executeShellScript(script)
+        }
+    }
+
+    func restoreD3DMetal() {
+        guard !isBusy else { return }
+        isBusy = true
+        activeTab = .maintenance
+        logs.removeAll()
+        appendLog("Restoring original stock D3DMetal for \(selectedCrossOverName)...")
+
+        let cxPath = cxAppPath
+        let backupDir = Self.gptkBackupDir(for: cxPath)
+
+        Task.detached {
+            let quotedCX = Self.shellQuoted(cxPath)
+            let quotedBackup = Self.shellQuoted(backupDir)
+            let script = """
+            set -e
+            CX_APP=\(quotedCX)
+            BACKUP_DIR=\(quotedBackup)
+            TARGET_GPTK="$CX_APP/Contents/SharedSupport/CrossOver/lib64/apple_gptk"
+
+            if [ ! -d "$BACKUP_DIR/external" ] || [ ! -d "$BACKUP_DIR/wine" ]; then
+                echo "[Error] No stock D3DMetal backup found at $BACKUP_DIR."
+                exit 1
+            fi
+
+            echo "Restoring backed-up apple_gptk into $CX_APP..."
+            rm -rf "$TARGET_GPTK/external" "$TARGET_GPTK/wine"
+            ditto "$BACKUP_DIR/external" "$TARGET_GPTK/external"
+            ditto "$BACKUP_DIR/wine" "$TARGET_GPTK/wine"
+
+            echo "Clearing quarantine, re-signing CrossOver, and purging D3DMetal shader caches..."
+            xattr -cr "$TARGET_GPTK"
+            codesign --force --deep --sign - "$CX_APP"
+            find /var/folders -name "*d3dm*" -exec rm -rf {} + 2>/dev/null || true
+
+            echo "[OK] Original stock D3DMetal restored."
+            """
+            await self.executeShellScript(script)
+        }
+    }
+
     func runAddon(_ addon: GameFixAddon) {
         guard !isBusy else { return }
         isBusy = true
@@ -621,6 +809,7 @@ final class HexAidViewModel: ObservableObject {
 struct ContentView: View {
     @StateObject private var vm = HexAidViewModel()
     @State private var isConfirmingCachePurge = false
+    @State private var isConfirmingD3DMetalRestore = false
 
     var body: some View {
         NavigationSplitView {
@@ -692,6 +881,18 @@ struct ContentView: View {
         } message: {
             Text("The caches will be rebuilt as you use CrossOver. This can make the next game launch take longer.")
         }
+        .confirmationDialog(
+            "Restore Stock Apple D3DMetal?",
+            isPresented: $isConfirmingD3DMetalRestore,
+            titleVisibility: .visible
+        ) {
+            Button("Restore Stock D3DMetal (\(vm.status.d3dMetalBackupVersion))", role: .destructive) {
+                vm.restoreD3DMetal()
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("Replaces the custom GPTK runtime in \(vm.selectedCrossOverName) with your backed-up stock D3DMetal and clears D3DMetal shader caches.")
+        }
         .onAppear {
             vm.refreshStatus()
         }
@@ -754,6 +955,36 @@ struct ContentView: View {
                     .disabled(vm.isBusy)
                 Toggle("Enable MSync + Rosetta 2 AVX", isOn: $vm.enableAVXAndMSync)
                     .disabled(vm.isBusy)
+            }
+
+            Section {
+                LabeledContent {
+                    Button("Select .dmg…") {
+                        vm.chooseAndInstallGPTK()
+                    }
+                    .disabled(vm.isBusy || !vm.status.crossoverExists)
+                } label: {
+                    Text("Upgrade from Apple GPTK .dmg")
+                    Text("Automatically handles nested .dmg images, backs up stock D3DMetal, and swaps matched external + wine shims")
+                }
+
+                if vm.status.hasD3DMetalBackup {
+                    LabeledContent {
+                        HStack(spacing: 12) {
+                            Text(vm.status.d3dMetalBackupVersion)
+                                .foregroundStyle(.secondary)
+                            Button("Restore Original", role: .destructive) {
+                                isConfirmingD3DMetalRestore = true
+                            }
+                            .disabled(vm.isBusy || !vm.status.crossoverExists)
+                        }
+                    } label: {
+                        Text("Stock D3DMetal Backup")
+                        Text("Revert \(vm.selectedCrossOverName) to its original Apple D3DMetal")
+                    }
+                }
+            } header: {
+                Text("Apple D3DMetal (GPTK)")
             }
         }
         .formStyle(.grouped)
