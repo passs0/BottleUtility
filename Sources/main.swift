@@ -823,7 +823,7 @@ struct ContentView: View {
                 .navigationTitle(vm.activeTab.rawValue)
                 .navigationSubtitle("\(vm.selectedCrossOverName) • v\(vm.status.versionString) • \(vm.status.bottleCount) Bottle\(vm.status.bottleCount == 1 ? "" : "s")")
         }
-        .frame(minWidth: 740, idealWidth: 800, minHeight: 520, idealHeight: 580)
+        .frame(minWidth: 740, idealWidth: 800, minHeight: 560, idealHeight: 650)
         .toolbar {
             ToolbarItemGroup(placement: .primaryAction) {
                 if vm.installedCrossOvers.count > 1 {
@@ -846,22 +846,13 @@ struct ContentView: View {
                 .disabled(vm.isBusy)
                 .help("Refresh status (⌘R)")
 
-                if vm.activeTab == .patcher {
-                    Button(action: { vm.runPatch() }) {
-                        if vm.isBusy {
-                            ProgressView().controlSize(.small)
-                        } else {
-                            Text(vm.status.isReady ? "Re-Apply Patches" : "Patch \(vm.selectedCrossOverName)")
-                        }
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .disabled(vm.isBusy || !vm.status.crossoverExists)
-                } else if vm.activeTab == .optimizations {
+                if vm.activeTab == .optimizations {
                     Button(action: { vm.applyOptimizations() }) {
                         if vm.isBusy {
                             ProgressView().controlSize(.small)
                         } else {
                             Text("Apply Tweaks")
+                                .padding(.horizontal, 6)
                         }
                     }
                     .buttonStyle(.borderedProminent)
@@ -955,6 +946,21 @@ struct ContentView: View {
                     .disabled(vm.isBusy)
                 Toggle("Enable MSync + Rosetta 2 AVX", isOn: $vm.enableAVXAndMSync)
                     .disabled(vm.isBusy)
+
+                HStack {
+                    Spacer()
+                    Button(action: { vm.runPatch() }) {
+                        if vm.isBusy {
+                            ProgressView().controlSize(.small)
+                        } else {
+                            Text(vm.status.isReady ? "Re-Apply Patches" : "Patch \(vm.selectedCrossOverName)")
+                                .padding(.horizontal, 8)
+                        }
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.regular)
+                    .disabled(vm.isBusy || !vm.status.crossoverExists)
+                }
             }
 
             Section {
