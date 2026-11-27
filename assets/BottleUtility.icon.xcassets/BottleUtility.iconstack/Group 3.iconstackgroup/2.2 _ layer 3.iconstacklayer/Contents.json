@@ -9,25 +9,25 @@
         "icon-studio-appearance" : "unspecified",
         "icon-studio-idiom" : "unspecified",
         "icon-studio-localization" : "unspecified",
-        "value" : "plus-darker"
+        "value" : "normal"
       },
       {
         "icon-studio-appearance" : "light",
         "icon-studio-idiom" : "macOS",
         "icon-studio-localization" : "unspecified",
-        "value" : "plus-darker"
+        "value" : "normal"
       },
       {
         "icon-studio-appearance" : "dark",
         "icon-studio-idiom" : "macOS",
         "icon-studio-localization" : "unspecified",
-        "value" : "plus-darker"
+        "value" : "normal"
       },
       {
         "icon-studio-appearance" : "tinted",
         "icon-studio-idiom" : "macOS",
         "icon-studio-localization" : "unspecified",
-        "value" : "plus-darker"
+        "value" : "normal"
       }
     ],
     "fill" : [
@@ -38,7 +38,7 @@
         "value" : {
           "color" : {
             "matching-style" : "fully-qualified-name",
-            "name" : "HexAid_Assets\/Color-1",
+            "name" : "BottleUtility_Assets\/Color-6",
             "type" : "color-set"
           },
           "type" : "solid"
@@ -51,7 +51,7 @@
         "value" : {
           "color" : {
             "matching-style" : "fully-qualified-name",
-            "name" : "HexAid_Assets\/Color-1",
+            "name" : "BottleUtility_Assets\/Color-6",
             "type" : "color-set"
           },
           "type" : "solid"
@@ -64,7 +64,7 @@
         "value" : {
           "color" : {
             "matching-style" : "fully-qualified-name",
-            "name" : "HexAid_Assets\/Color-1",
+            "name" : "BottleUtility_Assets\/Color-6",
             "type" : "color-set"
           },
           "type" : "solid"
@@ -77,7 +77,7 @@
         "value" : {
           "color" : {
             "matching-style" : "fully-qualified-name",
-            "name" : "HexAid_Assets\/Color-1",
+            "name" : "BottleUtility_Assets\/Color-6",
             "type" : "color-set"
           },
           "type" : "solid"
@@ -269,7 +269,7 @@
         "icon-studio-localization" : "unspecified",
         "value" : {
           "matching-style" : "fully-qualified-name",
-          "name" : "HexAid_Assets\/4.4 _ layer 2",
+          "name" : "BottleUtility_Assets\/2.2 _ layer 3",
           "type" : "image-set"
         }
       },
@@ -279,7 +279,7 @@
         "icon-studio-localization" : "unspecified",
         "value" : {
           "matching-style" : "fully-qualified-name",
-          "name" : "HexAid_Assets\/4.4 _ layer 2",
+          "name" : "BottleUtility_Assets\/2.2 _ layer 3",
           "type" : "image-set"
         }
       },
@@ -289,7 +289,7 @@
         "icon-studio-localization" : "unspecified",
         "value" : {
           "matching-style" : "fully-qualified-name",
-          "name" : "HexAid_Assets\/4.4 _ layer 2",
+          "name" : "BottleUtility_Assets\/2.2 _ layer 3",
           "type" : "image-set"
         }
       },
@@ -299,7 +299,7 @@
         "icon-studio-localization" : "unspecified",
         "value" : {
           "matching-style" : "fully-qualified-name",
-          "name" : "HexAid_Assets\/4.4 _ layer 2",
+          "name" : "BottleUtility_Assets\/2.2 _ layer 3",
           "type" : "image-set"
         }
       }
@@ -309,25 +309,25 @@
         "icon-studio-appearance" : "unspecified",
         "icon-studio-idiom" : "unspecified",
         "icon-studio-localization" : "unspecified",
-        "value" : false
+        "value" : true
       },
       {
         "icon-studio-appearance" : "light",
         "icon-studio-idiom" : "macOS",
         "icon-studio-localization" : "unspecified",
-        "value" : false
+        "value" : true
       },
       {
         "icon-studio-appearance" : "dark",
         "icon-studio-idiom" : "macOS",
         "icon-studio-localization" : "unspecified",
-        "value" : false
+        "value" : true
       },
       {
         "icon-studio-appearance" : "tinted",
         "icon-studio-idiom" : "macOS",
         "icon-studio-localization" : "unspecified",
-        "value" : false
+        "value" : true
       }
     ],
     "opacity" : [

@@ -4,7 +4,7 @@
     "version" : 1
   },
   "properties" : {
-    "name" : "system-dark",
+    "name" : "system-light",
     "orientation" : {
       "start" : {
         "x" : 0.5,
@@ -17,12 +17,12 @@
     },
     "primary-color" : {
       "matching-style" : "fully-qualified-name",
-      "name" : "HexAid_Assets\/Color-2",
+      "name" : "BottleUtility_Assets\/Color-4",
       "type" : "color-set"
     },
     "secondary-color" : {
       "matching-style" : "fully-qualified-name",
-      "name" : "HexAid_Assets\/Color-3",
+      "name" : "BottleUtility_Assets\/Color-5",
       "type" : "color-set"
     },
     "type" : "linear-gradient"

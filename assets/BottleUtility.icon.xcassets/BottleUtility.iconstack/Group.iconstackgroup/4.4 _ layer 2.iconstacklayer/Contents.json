@@ -9,25 +9,25 @@
         "icon-studio-appearance" : "unspecified",
         "icon-studio-idiom" : "unspecified",
         "icon-studio-localization" : "unspecified",
-        "value" : "normal"
+        "value" : "plus-darker"
       },
       {
         "icon-studio-appearance" : "light",
         "icon-studio-idiom" : "macOS",
         "icon-studio-localization" : "unspecified",
-        "value" : "normal"
+        "value" : "plus-darker"
       },
       {
         "icon-studio-appearance" : "dark",
         "icon-studio-idiom" : "macOS",
         "icon-studio-localization" : "unspecified",
-        "value" : "normal"
+        "value" : "plus-darker"
       },
       {
         "icon-studio-appearance" : "tinted",
         "icon-studio-idiom" : "macOS",
         "icon-studio-localization" : "unspecified",
-        "value" : "normal"
+        "value" : "plus-darker"
       }
     ],
     "fill" : [
@@ -36,12 +36,12 @@
         "icon-studio-idiom" : "unspecified",
         "icon-studio-localization" : "unspecified",
         "value" : {
-          "gradient" : {
+          "color" : {
             "matching-style" : "fully-qualified-name",
-            "name" : "HexAid_Assets\/system-light",
-            "type" : "icon-stack-gradient"
+            "name" : "BottleUtility_Assets\/Color-1",
+            "type" : "color-set"
           },
-          "type" : "gradient"
+          "type" : "solid"
         }
       },
       {
@@ -49,12 +49,12 @@
         "icon-studio-idiom" : "macOS",
         "icon-studio-localization" : "unspecified",
         "value" : {
-          "gradient" : {
+          "color" : {
             "matching-style" : "fully-qualified-name",
-            "name" : "HexAid_Assets\/system-light",
-            "type" : "icon-stack-gradient"
+            "name" : "BottleUtility_Assets\/Color-1",
+            "type" : "color-set"
           },
-          "type" : "gradient"
+          "type" : "solid"
         }
       },
       {
@@ -62,12 +62,12 @@
         "icon-studio-idiom" : "macOS",
         "icon-studio-localization" : "unspecified",
         "value" : {
-          "gradient" : {
+          "color" : {
             "matching-style" : "fully-qualified-name",
-            "name" : "HexAid_Assets\/system-light",
-            "type" : "icon-stack-gradient"
+            "name" : "BottleUtility_Assets\/Color-1",
+            "type" : "color-set"
           },
-          "type" : "gradient"
+          "type" : "solid"
         }
       },
       {
@@ -75,12 +75,12 @@
         "icon-studio-idiom" : "macOS",
         "icon-studio-localization" : "unspecified",
         "value" : {
-          "gradient" : {
+          "color" : {
             "matching-style" : "fully-qualified-name",
-            "name" : "HexAid_Assets\/system-light",
-            "type" : "icon-stack-gradient"
+            "name" : "BottleUtility_Assets\/Color-1",
+            "type" : "color-set"
           },
-          "type" : "gradient"
+          "type" : "solid"
         }
       }
     ],
@@ -269,7 +269,7 @@
         "icon-studio-localization" : "unspecified",
         "value" : {
           "matching-style" : "fully-qualified-name",
-          "name" : "HexAid_Assets\/3.3 _ layer 3",
+          "name" : "BottleUtility_Assets\/4.4 _ layer 2",
           "type" : "image-set"
         }
       },
@@ -279,7 +279,7 @@
         "icon-studio-localization" : "unspecified",
         "value" : {
           "matching-style" : "fully-qualified-name",
-          "name" : "HexAid_Assets\/3.3 _ layer 3",
+          "name" : "BottleUtility_Assets\/4.4 _ layer 2",
           "type" : "image-set"
         }
       },
@@ -289,7 +289,7 @@
         "icon-studio-localization" : "unspecified",
         "value" : {
           "matching-style" : "fully-qualified-name",
-          "name" : "HexAid_Assets\/3.3 _ layer 3",
+          "name" : "BottleUtility_Assets\/4.4 _ layer 2",
           "type" : "image-set"
         }
       },
@@ -299,7 +299,7 @@
         "icon-studio-localization" : "unspecified",
         "value" : {
           "matching-style" : "fully-qualified-name",
-          "name" : "HexAid_Assets\/3.3 _ layer 3",
+          "name" : "BottleUtility_Assets\/4.4 _ layer 2",
           "type" : "image-set"
         }
       }
@@ -309,25 +309,25 @@
         "icon-studio-appearance" : "unspecified",
         "icon-studio-idiom" : "unspecified",
         "icon-studio-localization" : "unspecified",
-        "value" : true
+        "value" : false
       },
       {
         "icon-studio-appearance" : "light",
         "icon-studio-idiom" : "macOS",
         "icon-studio-localization" : "unspecified",
-        "value" : true
+        "value" : false
       },
       {
         "icon-studio-appearance" : "dark",
         "icon-studio-idiom" : "macOS",
         "icon-studio-localization" : "unspecified",
-        "value" : true
+        "value" : false
       },
       {
         "icon-studio-appearance" : "tinted",
         "icon-studio-idiom" : "macOS",
         "icon-studio-localization" : "unspecified",
-        "value" : true
+        "value" : false
       }
     ],
     "opacity" : [
@@ -335,49 +335,49 @@
         "icon-studio-appearance" : "unspecified",
         "icon-studio-idiom" : "unspecified",
         "icon-studio-localization" : "unspecified",
-        "value" : 0.85
+        "value" : 1
       },
       {
         "icon-studio-appearance" : "light",
         "icon-studio-idiom" : "unspecified",
         "icon-studio-localization" : "unspecified",
-        "value" : 0.85
+        "value" : 1
       },
       {
         "icon-studio-appearance" : "dark",
         "icon-studio-idiom" : "unspecified",
         "icon-studio-localization" : "unspecified",
-        "value" : 0.85
+        "value" : 1
       },
       {
         "icon-studio-appearance" : "tinted",
         "icon-studio-idiom" : "unspecified",
         "icon-studio-localization" : "unspecified",
-        "value" : 0.85
+        "value" : 1
       },
       {
         "icon-studio-appearance" : "unspecified",
         "icon-studio-idiom" : "macOS",
         "icon-studio-localization" : "unspecified",
-        "value" : 0.85
+        "value" : 1
       },
       {
         "icon-studio-appearance" : "light",
         "icon-studio-idiom" : "macOS",
         "icon-studio-localization" : "unspecified",
-        "value" : 0.85
+        "value" : 1
       },
       {
         "icon-studio-appearance" : "dark",
         "icon-studio-idiom" : "macOS",
         "icon-studio-localization" : "unspecified",
-        "value" : 0.85
+        "value" : 1
       },
       {
         "icon-studio-appearance" : "tinted",
         "icon-studio-idiom" : "macOS",
         "icon-studio-localization" : "unspecified",
-        "value" : 0.85
+        "value" : 1
       }
     ]
   }

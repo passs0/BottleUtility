@@ -3,7 +3,8 @@ set -euo pipefail
 
 cd "$(dirname "$0")"
 
-APP_NAME="HexAid"
+APP_NAME="Bottle Utility"
+EXECUTABLE_NAME="BottleUtility"
 BUILD_DIR="build"
 APP_BUNDLE="${BUILD_DIR}/${APP_NAME}.app"
 ICONSET_DIR="${BUILD_DIR}/AppIcon.iconset"
@@ -20,23 +21,23 @@ cat > "${APP_BUNDLE}/Contents/Info.plist" << 'EOF'
 <plist version="1.0">
 <dict>
     <key>CFBundleExecutable</key>
-    <string>HexAid</string>
+    <string>BottleUtility</string>
     <key>CFBundleIdentifier</key>
-    <string>com.hexaid.app</string>
+    <string>com.passs0.bottleutility</string>
     <key>CFBundleName</key>
-    <string>HexAid</string>
+    <string>Bottle Utility</string>
     <key>CFBundleDisplayName</key>
-    <string>HexAid</string>
+    <string>Bottle Utility</string>
     <key>CFBundleVersion</key>
-    <string>2.4.1</string>
+    <string>2.5.0</string>
     <key>CFBundleShortVersionString</key>
-    <string>2.4.1</string>
+    <string>2.5.0</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleIconFile</key>
     <string>AppIcon</string>
     <key>CFBundleIconName</key>
-    <string>HexAid</string>
+    <string>BottleUtility</string>
     <key>LSMinimumSystemVersion</key>
     <string>13.0</string>
     <key>NSHighResolutionCapable</key>
@@ -45,15 +46,15 @@ cat > "${APP_BUNDLE}/Contents/Info.plist" << 'EOF'
 </plist>
 EOF
 
-if [ -d "assets/HexAid.icon.xcassets" ]; then
+if [ -d "assets/BottleUtility.icon.xcassets" ]; then
     if xcrun --find actool >/dev/null 2>&1; then
         echo "🎨 Compiling the Light, Dark, Clear, and Tinted app icon variants..."
         PARTIAL_PLIST="$(mktemp "${APP_BUNDLE}/icon-partial.XXXXXX")"
-        xcrun actool "assets/HexAid.icon.xcassets" \
+        xcrun actool "assets/BottleUtility.icon.xcassets" \
             --compile "${APP_BUNDLE}/Contents/Resources" \
             --platform macosx \
             --minimum-deployment-target 13.0 \
-            --app-icon HexAid \
+            --app-icon BottleUtility \
             --output-partial-info-plist "$PARTIAL_PLIST" \
             --output-format human-readable-text
         python3 - "$PARTIAL_PLIST" "${APP_BUNDLE}/Contents/Info.plist" <<'PY'
@@ -77,7 +78,7 @@ fi
 
 # Keep the generated asset-catalog ICNS as the legacy fallback when available.
 # Generate the larger standalone icon only for local builds without actool.
-if [ ! -f "${APP_BUNDLE}/Contents/Resources/HexAid.icns" ]; then
+if [ ! -f "${APP_BUNDLE}/Contents/Resources/BottleUtility.icns" ]; then
     echo "Generating a legacy fallback icon..."
     swift -module-cache-path /tmp/clang-module-cache scripts/generate_icon.swift "${ICONSET_DIR}" "assets/icon.png"
     iconutil -c icns "${ICONSET_DIR}" -o "${APP_BUNDLE}/Contents/Resources/AppIcon.icns"
@@ -88,11 +89,11 @@ swiftc -O \
     -target arm64-apple-macos13.0 \
     -module-cache-path /tmp/clang-module-cache \
     Sources/main.swift \
-    -o "${APP_BUNDLE}/Contents/MacOS/${APP_NAME}" \
+    -o "${APP_BUNDLE}/Contents/MacOS/${EXECUTABLE_NAME}" \
     -framework SwiftUI \
     -framework AppKit
 
-strip -rSTx "${APP_BUNDLE}/Contents/MacOS/${APP_NAME}"
+strip -rSTx "${APP_BUNDLE}/Contents/MacOS/${EXECUTABLE_NAME}"
 
 echo "4. Signing ${APP_BUNDLE}..."
 codesign --force --deep --sign - "${APP_BUNDLE}"

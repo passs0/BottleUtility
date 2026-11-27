@@ -4,11 +4,11 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$SCRIPT_DIR"
 
-APP_NAME="HexAid"
-VERSION=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "build/$APP_NAME.app/Contents/Info.plist" 2>/dev/null || echo "2.4.0")
-DMG_NAME="HexAid-v${VERSION}.dmg"
-STAGING_DIR="/tmp/hexaid_dmg_staging"
-RW_DMG="/tmp/hexaid_rw.dmg"
+APP_NAME="Bottle Utility"
+VERSION=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "build/$APP_NAME.app/Contents/Info.plist" 2>/dev/null || echo "2.5.0")
+DMG_NAME="BottleUtility-v${VERSION}.dmg"
+STAGING_DIR="/tmp/bottleutility_dmg_staging"
+RW_DMG="/tmp/bottleutility_rw.dmg"
 
 if [ ! -d "build/$APP_NAME.app" ]; then
     echo "🔨 Building $APP_NAME.app first..."

@@ -23,7 +23,7 @@
         "value" : {
           "gradient" : {
             "matching-style" : "fully-qualified-name",
-            "name" : "HexAid_Assets\/system-dark",
+            "name" : "BottleUtility_Assets\/system-dark",
             "type" : "icon-stack-gradient"
           },
           "type" : "gradient"
@@ -36,7 +36,7 @@
         "value" : {
           "gradient" : {
             "matching-style" : "fully-qualified-name",
-            "name" : "HexAid_Assets\/system-dark",
+            "name" : "BottleUtility_Assets\/system-dark",
             "type" : "icon-stack-gradient"
           },
           "type" : "gradient"
@@ -49,7 +49,7 @@
         "value" : {
           "gradient" : {
             "matching-style" : "fully-qualified-name",
-            "name" : "HexAid_Assets\/system-dark",
+            "name" : "BottleUtility_Assets\/system-dark",
             "type" : "icon-stack-gradient"
           },
           "type" : "gradient"
@@ -62,7 +62,7 @@
         "value" : {
           "gradient" : {
             "matching-style" : "fully-qualified-name",
-            "name" : "HexAid_Assets\/system-dark",
+            "name" : "BottleUtility_Assets\/system-dark",
             "type" : "icon-stack-gradient"
           },
           "type" : "gradient"

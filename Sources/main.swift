@@ -61,12 +61,12 @@ struct GameFixAddon: Identifiable {
     let iconName: String
 
     var tarballURL: String {
-        "https://github.com/passs0/HexAid/archive/refs/heads/main.tar.gz"
+        "https://github.com/passs0/BottleUtility/archive/refs/heads/main.tar.gz"
     }
 
     var localDirectory: URL {
         let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
-        return appSupport.appendingPathComponent("HexAid/Addons/\(id)", isDirectory: true)
+        return appSupport.appendingPathComponent("BottleUtility/Addons/\(id)", isDirectory: true)
     }
 
     var isDownloaded: Bool {
@@ -103,7 +103,7 @@ struct CrossOverInstallation: Identifiable, Hashable, Sendable {
 // MARK: - View Model
 
 @MainActor
-final class HexAidViewModel: ObservableObject {
+final class BottleUtilityViewModel: ObservableObject {
     @Published var status = ComponentStatus()
     @Published var isBusy = false
     @Published var activeTab: ActiveTab = .patcher
@@ -215,7 +215,7 @@ final class HexAidViewModel: ObservableObject {
         let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
         let name = CrossOverInstallation(path: cxAppPath).displayName
         return appSupport
-            .appendingPathComponent("HexAid/Backups/\(name)/apple_gptk", isDirectory: true)
+            .appendingPathComponent("BottleUtility/Backups/\(name)/apple_gptk", isDirectory: true)
             .path
     }
 
@@ -357,7 +357,7 @@ final class HexAidViewModel: ObservableObject {
         guard !isBusy else { return }
         isBusy = true
         logs.removeAll()
-        appendLog("Starting HexAid patch on \(selectedCrossOverName).app...")
+        appendLog("Starting Bottle Utility patch on \(selectedCrossOverName).app...")
 
         let doGst = updateGStreamer
         let doDxmt = updateDXMT
@@ -428,7 +428,7 @@ final class HexAidViewModel: ObservableObject {
                 DXVK_URL=$(curl -fsSL "https://api.github.com/repos/Gcenx/DXVK-macOS/releases/latest" 2>/dev/null | grep -oE 'https://github.com/Gcenx/DXVK-macOS/releases/download/[^"]+\\.tar\\.gz' | head -n1 || true)
                 if [ -n "$DXVK_URL" ]; then
                     echo "Downloading & updating DXVK ($DXVK_URL)..."
-                    TMP_DXVK=$(mktemp -d /tmp/hexaid_dxvk.XXXXXX)
+                    TMP_DXVK=$(mktemp -d /tmp/bottleutility_dxvk.XXXXXX)
                     if curl -fL "$DXVK_URL" | tar -xz -C "$TMP_DXVK" 2>/dev/null; then
                         mkdir -p "$DXVK_DIR/x86_64-windows" "$DXVK_DIR/i386-windows"
                         find "$TMP_DXVK" -path "*/x64/*.dll" -exec cp -f {} "$DXVK_DIR/x86_64-windows/" \\; 2>/dev/null || true
@@ -457,7 +457,7 @@ final class HexAidViewModel: ObservableObject {
             codesign --force --deep --sign - "$CX_APP"
             rm -f "$HOME/Library/Application Support/CrossOver/gstreamer-1.0-registry.x86_64.bin"
 
-            echo "[OK] HexAid patch complete. All components verified."
+            echo "[OK] Bottle Utility patch complete. All components verified."
             """
 
             await self.executeShellScript(script)
@@ -616,7 +616,7 @@ final class HexAidViewModel: ObservableObject {
             BACKUP_DIR=\(quotedBackup)
             TARGET_GPTK="$CX_APP/Contents/SharedSupport/CrossOver/lib64/apple_gptk"
 
-            OUTER_MOUNT=$(mktemp -d /tmp/hexaid_gptk_outer.XXXXXX)
+            OUTER_MOUNT=$(mktemp -d /tmp/bottleutility_gptk_outer.XXXXXX)
             INNER_MOUNT=""
 
             cleanup() {
@@ -640,7 +640,7 @@ final class HexAidViewModel: ObservableObject {
                 INNER_DMG=$(find "$OUTER_MOUNT" -maxdepth 3 -type f -iname "*.dmg" 2>/dev/null | head -n 1 || true)
                 if [ -n "$INNER_DMG" ]; then
                     echo "Found nested disk image: $(basename "$INNER_DMG"). Mounting..."
-                    INNER_MOUNT=$(mktemp -d /tmp/hexaid_gptk_inner.XXXXXX)
+                    INNER_MOUNT=$(mktemp -d /tmp/bottleutility_gptk_inner.XXXXXX)
                     yes | hdiutil attach "$INNER_DMG" -nobrowse -readonly -noverify -mountpoint "$INNER_MOUNT" >/dev/null
                     FOUND_FW=$(find "$INNER_MOUNT" -maxdepth 5 -type d -name "D3DMetal.framework" 2>/dev/null | head -n 1 || true)
                 fi
@@ -755,7 +755,7 @@ final class HexAidViewModel: ObservableObject {
             ADDON_DIR="\(dirPath)"
             rm -rf "$ADDON_DIR"
             mkdir -p "$ADDON_DIR"
-            curl -fsSL "\(url)" | tar -xz -C "$ADDON_DIR" --strip-components=3 "HexAid-main/Addons/\(folder)"
+            curl -fsSL "\(url)" | tar -xz -C "$ADDON_DIR" --strip-components=3 "BottleUtility-main/Addons/\(folder)"
             cd "$ADDON_DIR"
             chmod +x install.sh
             zsh ./install.sh
@@ -817,7 +817,7 @@ final class HexAidViewModel: ObservableObject {
 // MARK: - Main Content View
 
 struct ContentView: View {
-    @StateObject private var vm = HexAidViewModel()
+    @StateObject private var vm = BottleUtilityViewModel()
     @State private var isConfirmingCachePurge = false
     @State private var isConfirmingD3DMetalRestore = false
 
@@ -1113,7 +1113,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             backing: .buffered,
             defer: false
         )
-        window.title = "HexAid"
+        window.title = "Bottle Utility"
         window.toolbar = NSToolbar()
         window.toolbarStyle = .unified
         window.titlebarSeparatorStyle = .automatic
