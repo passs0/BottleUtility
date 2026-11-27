@@ -39,7 +39,6 @@ struct ComponentStatus {
 enum ActiveTab: String, CaseIterable, Identifiable {
     case patcher = "Runtime"
     case optimizations = "Tweaks"
-    case gameFixes = "Game Fixes"
     case maintenance = "Storage & Console"
 
     var id: String { rawValue }
@@ -47,48 +46,9 @@ enum ActiveTab: String, CaseIterable, Identifiable {
         switch self {
         case .patcher: return "bandage"
         case .optimizations: return "slider.horizontal.3"
-        case .gameFixes: return "gamecontroller"
         case .maintenance: return "internaldrive"
         }
     }
-}
-
-struct GameFixAddon: Identifiable {
-    let id: String
-    let title: String
-    let subtitle: String
-    let folderName: String
-    let iconName: String
-
-    var tarballURL: String {
-        "https://github.com/passs0/BottleUtility/archive/refs/heads/main.tar.gz"
-    }
-
-    var localDirectory: URL {
-        let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
-        return appSupport.appendingPathComponent("BottleUtility/Addons/\(id)", isDirectory: true)
-    }
-
-    var isDownloaded: Bool {
-        FileManager.default.fileExists(atPath: localDirectory.appendingPathComponent("install.sh").path)
-    }
-
-    static let catalog: [GameFixAddon] = [
-        GameFixAddon(
-            id: "re9",
-            title: "Resident Evil Requiem (RE9)",
-            subtitle: "Fixes D3DMetal/MetalFX stability, audio popping, Bluetooth DualSense, and window focus",
-            folderName: "RE9-CrossOver-Fix",
-            iconName: "cross.case"
-        ),
-        GameFixAddon(
-            id: "sh2r",
-            title: "Silent Hill 2 Remake (GOG)",
-            subtitle: "Fixes launch focus, cursor hiding, and UE5 D3D11/DXMT frame pacing",
-            folderName: "SH2R-CrossOver-Fix",
-            iconName: "display"
-        )
-    ]
 }
 
 struct CrossOverInstallation: Identifiable, Hashable, Sendable {
@@ -739,32 +699,6 @@ final class BottleUtilityViewModel: ObservableObject {
         }
     }
 
-    func runAddon(_ addon: GameFixAddon) {
-        guard !isBusy else { return }
-        isBusy = true
-        activeTab = .maintenance
-        logs.removeAll()
-        appendLog("Downloading \(addon.title) add-on from GitHub...")
-
-        let dirPath = addon.localDirectory.path
-        let url = addon.tarballURL
-        let folder = addon.folderName
-        Task.detached {
-            let script = """
-            set -e
-            ADDON_DIR="\(dirPath)"
-            rm -rf "$ADDON_DIR"
-            mkdir -p "$ADDON_DIR"
-            curl -fsSL "\(url)" | tar -xz -C "$ADDON_DIR" --strip-components=3 "BottleUtility-main/Addons/\(folder)"
-            cd "$ADDON_DIR"
-            chmod +x install.sh
-            zsh ./install.sh
-            echo "[OK] \(addon.title) fix completed."
-            """
-            await self.executeShellScript(script)
-        }
-    }
-
     nonisolated func executeShellScript(_ script: String) async {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/bin/zsh")
@@ -906,8 +840,6 @@ struct ContentView: View {
             patcherView
         case .optimizations:
             optimizationsView
-        case .gameFixes:
-            gameFixesView
         case .maintenance:
             maintenanceView
         }
@@ -1017,25 +949,6 @@ struct ContentView: View {
                     .disabled(vm.isBusy)
                 Toggle("MSync + Rosetta 2 AVX", isOn: $vm.enableAVXAndMSync)
                     .disabled(vm.isBusy)
-            }
-        }
-        .formStyle(.grouped)
-    }
-
-    private var gameFixesView: some View {
-        Form {
-            Section("Downloadable Game-Specific Add-Ons") {
-                ForEach(GameFixAddon.catalog) { addon in
-                    LabeledContent {
-                        Button(addon.isDownloaded ? "Re-Apply" : "Download & Run") {
-                            vm.runAddon(addon)
-                        }
-                        .disabled(vm.isBusy || !vm.status.crossoverExists)
-                    } label: {
-                        Text(addon.title)
-                        Text(addon.subtitle)
-                    }
-                }
             }
         }
         .formStyle(.grouped)

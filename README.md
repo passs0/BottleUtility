@@ -26,8 +26,20 @@
 - **GStreamer + FFmpeg:** Installs [`Sikarugir-App/gstreamer`](https://github.com/Sikarugir-App/gstreamer) and links `winegstreamer.so` to fix broken or frozen UE4/UE5 cutscenes.
 - **DXMT, DXVK & D3DMetal:** Pulls the latest [`3Shain/dxmt`](https://github.com/3Shain/dxmt) and optional [`Gcenx/DXVK-macOS`](https://github.com/Gcenx/DXVK-macOS) releases, and lets you upgrade or restore CrossOver's `D3DMetal.framework` from an Apple Game Porting Toolkit `.dmg`.
 - **Optimizations:** Toggles NVIDIA RTX (`0x10DE`) D3DMetal spoofing, Metal Performance HUD (`MTL_HUD_ENABLED=1`), macOS Game Mode, `WINEMSYNC=1`, and `ROSETTA_ADVERTISE_AVX=1`.
-- **Game Fixes add-ons:** Downloads and runs built-in game fixes (`RE9-CrossOver-Fix`, `SH2R-CrossOver-Fix`) from `Addons/` on demand.
 - **Cache cleanup:** Inspects and clears D3DMetal shader caches and GStreamer registries.
+
+## Standalone Game Fixes
+
+Game-specific fix scripts live separately in [`Addons/`](Addons/) rather than inside the app. Run them on demand in Terminal:
+
+- **Resident Evil Requiem (RE9):**
+  ```zsh
+  tmp=$(mktemp -d) && curl -fsSL https://github.com/passs0/BottleUtility/archive/refs/heads/main.tar.gz | tar -xz -C "$tmp" --strip-components=3 BottleUtility-main/Addons/RE9-CrossOver-Fix && zsh "$tmp/install.sh" && rm -rf "$tmp"
+  ```
+- **Silent Hill 2 Remake (GOG):**
+  ```zsh
+  tmp=$(mktemp -d) && curl -fsSL https://github.com/passs0/BottleUtility/archive/refs/heads/main.tar.gz | tar -xz -C "$tmp" --strip-components=3 BottleUtility-main/Addons/SH2R-CrossOver-Fix && zsh "$tmp/install.sh" && rm -rf "$tmp"
+  ```
 
 ## Install
 
