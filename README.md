@@ -24,14 +24,14 @@
 
 - **In-place patching:** Detects CrossOver and CrossOver Preview and patches the selected bundle directly so existing bottles pick up the updates.
 - **GStreamer + FFmpeg:** Installs [`Sikarugir-App/gstreamer`](https://github.com/Sikarugir-App/gstreamer) and links `winegstreamer.so` to fix broken or frozen UE4/UE5 cutscenes.
-- **DXMT & DXVK:** Pulls the latest [`3Shain/dxmt`](https://github.com/3Shain/dxmt) and optional [`Gcenx/DXVK-macOS`](https://github.com/Gcenx/DXVK-macOS) releases while leaving CrossOver's `D3DMetal.framework` intact.
+- **DXMT, DXVK & D3DMetal:** Pulls the latest [`3Shain/dxmt`](https://github.com/3Shain/dxmt) and optional [`Gcenx/DXVK-macOS`](https://github.com/Gcenx/DXVK-macOS) releases, and lets you upgrade or restore CrossOver's `D3DMetal.framework` from an Apple Game Porting Toolkit `.dmg`.
 - **Optimizations:** Toggles NVIDIA RTX (`0x10DE`) D3DMetal spoofing, Metal Performance HUD (`MTL_HUD_ENABLED=1`), macOS Game Mode, `WINEMSYNC=1`, and `ROSETTA_ADVERTISE_AVX=1`.
-- **Game Fixes add-ons:** Downloads and runs game-specific fixes like [`RE9-CrossOver-Fix`](https://github.com/passs0/RE9-CrossOver-Fix) and [`SH2R-CrossOver-Fix`](https://github.com/passs0/SH2R-CrossOver-Fix) on demand.
+- **Game Fixes add-ons:** Downloads and runs built-in game fixes (`RE9-CrossOver-Fix`, `SH2R-CrossOver-Fix`) from `Addons/` on demand.
 - **Cache cleanup:** Inspects and clears D3DMetal shader caches and GStreamer registries.
 
 ## Install
 
-Download **`HexAid-v2.4.0.dmg`** from [Releases](https://github.com/passs0/HexAid/releases/latest) and drag `HexAid.app` to `/Applications`.
+Download **`HexAid-v2.4.1.dmg`** from [Releases](https://github.com/passs0/HexAid/releases/latest) and drag `HexAid.app` to `/Applications`.
 
 If Gatekeeper blocks the first launch:
 ```zsh

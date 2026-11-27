@@ -141,18 +141,6 @@ final class HexAidViewModel: ObservableObject {
             activeTab = .optimizations
         } else if CommandLine.arguments.contains("--tab-maintenance") {
             activeTab = .maintenance
-            logs = [
-                "[09:42:01] Starting HexAid patch on \(selectedCrossOverPath)...",
-                "[09:42:02] Resolving latest GStreamer build from Sikarugir-App/gstreamer...",
-                "[09:42:03] Downloading & extracting GStreamer 1.28.1 (with FFmpeg/libav)...",
-                "[09:42:04] Cleaning conflicting stock GStreamer/GLib libraries & linking plugins...",
-                "[09:42:05] Linking winegstreamer.so to GStreamer.framework...",
-                "[09:42:06] Resolving latest DXMT release from 3Shain/dxmt...",
-                "[09:42:07] Downloading & extracting DXMT v0.80 builtin...",
-                "[09:42:08] Ensuring WINEMSYNC=1 and ROSETTA_ADVERTISE_AVX=1 on existing bottles...",
-                "[09:42:09] Clearing quarantine, re-signing \(selectedCrossOverName).app & resetting caches...",
-                "[09:42:10] ✅ HexAid patch complete! All components verified."
-            ]
         }
     }
 
@@ -189,6 +177,8 @@ final class HexAidViewModel: ObservableObject {
                 self.status = next
                 self.toggleMetalHUD = next.metalHudEnabled
                 self.toggleNvidiaSpoof = next.nvidiaSpoofEnabled
+                self.toggleGameMode = next.gameModeEnabled
+                self.enableAVXAndMSync = next.avxMsyncEnabled
             }
         }
     }
@@ -483,6 +473,7 @@ final class HexAidViewModel: ObservableObject {
         let enableHUD = toggleMetalHUD
         let enableNvidia = toggleNvidiaSpoof
         let enableGM = toggleGameMode
+        let enableAVX = enableAVXAndMSync
         let cxPath = cxAppPath
         let cxName = selectedCrossOverName
         let btlPath = bottlesPath
@@ -525,6 +516,19 @@ final class HexAidViewModel: ObservableObject {
                         sed -i '' '/"D3DM_VENDOR_ID"/d' "$CONF"
                         sed -i '' '/"D3DM_DEVICE_ID"/d' "$CONF"
                     fi
+                fi
+
+                # MSync + Rosetta 2 AVX
+                if [ "\(enableAVX ? "1" : "0")" = "1" ]; then
+                    if ! grep -q '"WINEMSYNC"' "$CONF"; then
+                        printf '\\n"WINEMSYNC" = "1"\\n' >> "$CONF"
+                    fi
+                    if ! grep -q '"ROSETTA_ADVERTISE_AVX"' "$CONF"; then
+                        printf '"ROSETTA_ADVERTISE_AVX" = "1"\\n' >> "$CONF"
+                    fi
+                else
+                    sed -i '' '/"WINEMSYNC"/d' "$CONF"
+                    sed -i '' '/"ROSETTA_ADVERTISE_AVX"/d' "$CONF"
                 fi
             done
 
@@ -761,7 +765,7 @@ final class HexAidViewModel: ObservableObject {
         }
     }
 
-    func executeShellScript(_ script: String) async {
+    nonisolated func executeShellScript(_ script: String) async {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/bin/zsh")
         process.arguments = ["-c", script]
@@ -771,13 +775,17 @@ final class HexAidViewModel: ObservableObject {
         process.standardError = pipe
 
         let handle = pipe.fileHandleForReading
-        handle.readabilityHandler = { fileHandle in
+        handle.readabilityHandler = { [weak self] fileHandle in
             let data = fileHandle.availableData
-            guard !data.isEmpty, let text = String(data: data, encoding: .utf8) else { return }
+            if data.isEmpty {
+                fileHandle.readabilityHandler = nil
+                return
+            }
+            guard let text = String(data: data, encoding: .utf8) else { return }
             let lines = text.split(whereSeparator: \.isNewline).map(String.init)
-            Task { @MainActor in
+            Task { @MainActor [weak self] in
                 for line in lines {
-                    self.appendLog(line)
+                    self?.appendLog(line)
                 }
             }
         }
@@ -786,6 +794,7 @@ final class HexAidViewModel: ObservableObject {
             try process.run()
             process.waitUntilExit()
             handle.readabilityHandler = nil
+            try? handle.close()
             let code = process.terminationStatus
             await MainActor.run {
                 self.isBusy = false
@@ -796,6 +805,7 @@ final class HexAidViewModel: ObservableObject {
             }
         } catch {
             handle.readabilityHandler = nil
+            try? handle.close()
             await MainActor.run {
                 self.isBusy = false
                 self.appendLog("[Error] \(error.localizedDescription)")
