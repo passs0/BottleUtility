@@ -31,7 +31,7 @@
 
 ## Install
 
-Download **`BottleUtility-v2.5.0.dmg`** from [Releases](https://github.com/passs0/BottleUtility/releases/latest) and drag `Bottle Utility.app` to `/Applications`.
+Download **`BottleUtility-v2.5.1.dmg`** from [Releases](https://github.com/passs0/BottleUtility/releases/latest) and drag `Bottle Utility.app` to `/Applications`.
 
 If Gatekeeper blocks the first launch:
 ```zsh

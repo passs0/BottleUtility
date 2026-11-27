@@ -29,9 +29,9 @@ cat > "${APP_BUNDLE}/Contents/Info.plist" << 'EOF'
     <key>CFBundleDisplayName</key>
     <string>Bottle Utility</string>
     <key>CFBundleVersion</key>
-    <string>2.5.0</string>
+    <string>2.5.1</string>
     <key>CFBundleShortVersionString</key>
-    <string>2.5.0</string>
+    <string>2.5.1</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleIconFile</key>

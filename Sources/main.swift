@@ -1068,7 +1068,7 @@ struct ContentView: View {
                                 ForEach(Array(vm.logs.enumerated()), id: \.offset) { idx, line in
                                     Text(line)
                                         .font(.system(size: 11, design: .monospaced))
-                                        .foregroundColor((line.contains("[Error]") || line.contains("❌")) ? .red : ((line.contains("[OK]") || line.contains("✅")) ? .green : .primary))
+                                        .foregroundColor(line.contains("[Error]") ? .red : (line.contains("[OK]") ? .green : .primary))
                                         .frame(maxWidth: .infinity, alignment: .leading)
                                         .id(idx)
                                 }
