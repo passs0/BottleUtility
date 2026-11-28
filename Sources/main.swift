@@ -179,11 +179,15 @@ final class BottleUtilityViewModel: ObservableObject {
             .path
     }
 
+    private nonisolated static let bottlePathRegex = try? NSRegularExpression(
+        pattern: #"(?m)^\s*"CX_BOTTLE_PATH"\s*=\s*"([^"]+)""#
+    )
+
     nonisolated static func bottlePath(for cxAppPath: String) -> String {
         let fallback = ("~/Library/Application Support/CrossOver/Bottles" as NSString).expandingTildeInPath
         let configPath = "\(cxAppPath)/Contents/SharedSupport/CrossOver/etc/CrossOver.conf"
         guard let config = try? String(contentsOfFile: configPath, encoding: .utf8),
-              let regex = try? NSRegularExpression(pattern: #"(?m)^\s*"CX_BOTTLE_PATH"\s*=\s*"([^"]+)""#),
+              let regex = bottlePathRegex,
               let match = regex.firstMatch(in: config, range: NSRange(config.startIndex..., in: config)),
               let range = Range(match.range(at: 1), in: config) else {
             return fallback
