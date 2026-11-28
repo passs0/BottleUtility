@@ -111,7 +111,7 @@ PY
   echo "✅ Enabled Bluetooth PS5 DualSense controller in system.reg (DisableHidraw=1)"
 fi
 
-# 5. Ensure RetinaMode="n" in user.reg for clean borderless scaling
+# 5. Enable RetinaMode="y" in user.reg for crisp Retina text/UI paired with FSR1 Performance
 if [[ -f "$TARGET_BOTTLE/user.reg" ]]; then
   python3 - "$TARGET_BOTTLE/user.reg" <<'PY'
 import sys, re
@@ -127,15 +127,15 @@ if section in text:
     block = text[idx:next_sec] if next_sec != -1 else text[idx:]
     block = re.sub(r'^"CaptureDisplaysForFullscreen"=".*?"\n?', '', block, flags=re.MULTILINE)
     if '"RetinaMode"' in block:
-        block = re.sub(r'"RetinaMode"=".*?"', '"RetinaMode"="n"', block)
+        block = re.sub(r'"RetinaMode"=".*?"', '"RetinaMode"="y"', block)
     else:
-        block = block.rstrip() + '\n"RetinaMode"="n"\n\n'
+        block = block.rstrip() + '\n"RetinaMode"="y"\n\n'
     text = (text[:idx] + block + text[next_sec:]) if next_sec != -1 else (text[:idx] + block)
 
 with open(path, "w", encoding="utf-8") as f:
     f.write(text)
 PY
-  echo "✅ Verified Wine Mac Driver settings in user.reg (RetinaMode=\"n\")"
+  echo "✅ Verified Wine Mac Driver settings in user.reg (RetinaMode=\"y\")"
 fi
 
 # 6. Apply tuned graphics, upscaling & P-core worker-thread settings in config.ini
@@ -188,8 +188,8 @@ if "[Render/Display]" in t_sec:
         den = max(info.get("RefreshRateDenominator", 1000), 1)
         hz = num / den
         if 1280 <= w <= 1920 and h >= 720:
-            # Prefer exact 1512x982 if present, otherwise largest clean mode <= 1920 at highest refresh
-            pref = 1 if (w == 1512 and h == 982) else 0
+            # Prefer 1920x1200 (RetinaMode=y) or 1512x982, otherwise largest clean mode <= 1920 at highest refresh
+            pref = 2 if (w == 1920 and h == 1200) else (1 if (w == 1512 and h == 982) else 0)
             candidates.append((pref, w * h, hz, idx))
     if candidates:
         candidates.sort()
