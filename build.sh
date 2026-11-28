@@ -23,15 +23,15 @@ cat > "${APP_BUNDLE}/Contents/Info.plist" << 'EOF'
     <key>CFBundleExecutable</key>
     <string>BottleUtility</string>
     <key>CFBundleIdentifier</key>
-    <string>com.passs0.bottleutility</string>
+    <string>com.bottleutility.macos</string>
     <key>CFBundleName</key>
     <string>Bottle Utility</string>
     <key>CFBundleDisplayName</key>
     <string>Bottle Utility</string>
     <key>CFBundleVersion</key>
-    <string>2.5.2</string>
+    <string>2.5.3</string>
     <key>CFBundleShortVersionString</key>
-    <string>2.5.2</string>
+    <string>2.5.3</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleIconFile</key>

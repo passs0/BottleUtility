@@ -43,7 +43,7 @@ Game-specific fix scripts live separately in [`Addons/`](Addons/) rather than in
 
 ## Install
 
-Download **`BottleUtility-v2.5.2.dmg`** from [Releases](https://github.com/passs0/BottleUtility/releases/latest) and drag `Bottle Utility.app` to `/Applications`.
+Download **`BottleUtility-v2.5.3.dmg`** from [Releases](https://github.com/passs0/BottleUtility/releases/latest) and drag `Bottle Utility.app` to `/Applications`.
 
 If Gatekeeper blocks the first launch:
 ```zsh
