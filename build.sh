@@ -29,9 +29,9 @@ cat > "${APP_BUNDLE}/Contents/Info.plist" << 'EOF'
     <key>CFBundleDisplayName</key>
     <string>Bottle Utility</string>
     <key>CFBundleVersion</key>
-    <string>2.5.1</string>
+    <string>2.5.2</string>
     <key>CFBundleShortVersionString</key>
-    <string>2.5.1</string>
+    <string>2.5.2</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleIconFile</key>
@@ -80,12 +80,13 @@ fi
 # Generate the larger standalone icon only for local builds without actool.
 if [ ! -f "${APP_BUNDLE}/Contents/Resources/BottleUtility.icns" ]; then
     echo "Generating a legacy fallback icon..."
-    swift -module-cache-path /tmp/clang-module-cache scripts/generate_icon.swift "${ICONSET_DIR}" "assets/icon.png"
+    swift -module-cache-path /tmp/clang-module-cache scripts/generate_icon.swift "${ICONSET_DIR}" "assets/icon_mac.png"
     iconutil -c icns "${ICONSET_DIR}" -o "${APP_BUNDLE}/Contents/Resources/AppIcon.icns"
 fi
 
 echo "3. Compiling ${APP_NAME} (targeting arm64-apple-macos13.0)..."
-swiftc -O \
+swiftc -Osize \
+    -Xlinker -dead_strip \
     -target arm64-apple-macos13.0 \
     -module-cache-path /tmp/clang-module-cache \
     Sources/main.swift \

@@ -5,7 +5,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$SCRIPT_DIR"
 
 APP_NAME="Bottle Utility"
-VERSION=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "build/$APP_NAME.app/Contents/Info.plist" 2>/dev/null || echo "2.5.1")
+VERSION=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "build/$APP_NAME.app/Contents/Info.plist" 2>/dev/null || echo "2.5.2")
 DMG_NAME="BottleUtility-v${VERSION}.dmg"
 STAGING_DIR="/tmp/bottleutility_dmg_staging"
 RW_DMG="/tmp/bottleutility_rw.dmg"
